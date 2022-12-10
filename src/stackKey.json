@@ -1,0 +1,38 @@
+[
+  {
+    "colorKey": "#222466",
+    "stackGroup": "background"
+  },
+  {
+    "colorKey": "#4A2129",
+    "stackGroup": "stump"
+  },
+  {
+    "colorKey": "#C66A22",
+    "stackGroup": "tree"
+  },
+  {
+    "colorKey": "#971587",
+    "stackGroup": "background"
+  },
+  {
+    "colorKey": "#98CACB",
+    "stackGroup": "tree"
+  },
+  {
+    "colorKey": "#C4152F",
+    "stackGroup": "background"
+  },
+  {
+    "colorKey": "#58DE12",
+    "stackGroup": "tree"
+  },
+  {
+    "colorKey": "#152FC4",
+    "stackGroup": "background"
+  },
+  {
+    "colorKey": "#C4BC15",
+    "stackGroup": "star"
+  }
+]

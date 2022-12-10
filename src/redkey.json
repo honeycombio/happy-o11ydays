@@ -1,0 +1,50 @@
+{
+  "0": {
+    "what": "star"
+  },
+  "80": {
+    "what": "harness"
+  },
+  "90": {
+    "what": "reindeer",
+    "reindeer-name": "dancer"
+  },
+  "100": {
+    "what": "santa"
+  },
+  "120": {
+    "what": "reindeer",
+    "reindeer-name": "prancer"
+  },
+  "110": {
+    "what": "reindeer",
+    "reindeer-name": "rudolph"
+  },
+  "130": {
+    "what": "sleigh"
+  },
+  "140": {
+    "what": "word",
+    "letter": "o"
+  },
+  "141": {
+    "what": "word",
+    "letter": "b"
+  },
+  "142": {
+    "what": "word",
+    "letter": "s"
+  },
+  "143": {
+    "what": "word",
+    "letter": "e"
+  },
+  "144": {
+    "what": "word",
+    "letter": "r"
+  },
+  "145": {
+    "what": "word",
+    "letter": "v"
+  }
+}
