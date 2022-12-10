@@ -14,7 +14,7 @@ A Honeycomb account. Get a free one [here](https://honeycomb.io/signup), or use 
 
 You can clone this repository, or open in an online IDE in GitPod:
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/jessitron/hny-art-node)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/honeycombio/happy-o11ydays)
 
 Get a [Honeycomb API Key]().
 
