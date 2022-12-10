@@ -1,5 +1,5 @@
 import { Pixel, readImage } from "./image";
-import { default as stackKey } from "./stackKey.json";
+import { default as stackKey } from "../input/stackKey.json";
 
 function onlyUnique<T>(value: T, index: number, self: T[]): boolean {
   return self.indexOf(value) === index;
@@ -115,7 +115,7 @@ type PossibleStackSpec = { stackHeight?: number; stackGroup?: string };
 export function addStackedGraphAttributes<T extends EnoughOfASpanSpec>(
   spanSpecs: T[]
 ): Array<T & PossibleStackSpec> {
-  var stackSpecCountByDelta = groupByTimeDelta(readSpecsFromImage("house.png")); // the array reference won't be mutated but its contents will be
+  var stackSpecCountByDelta = groupByTimeDelta(readSpecsFromImage("input/house.png")); // the array reference won't be mutated but its contents will be
 
   const withStackSpecs = spanSpecs.map((ss) => {
     // do we have a need for a stack spec at this time?

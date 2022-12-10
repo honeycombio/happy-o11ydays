@@ -1,6 +1,6 @@
 import { Pixel } from "./image";
 
-import { default as rednessJson } from "./redkey.json";
+import { default as rednessJson } from "../input/redkey.json";
 
 const rednessKey: Record<string, object> = rednessJson;
 

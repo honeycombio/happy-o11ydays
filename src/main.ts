@@ -101,6 +101,6 @@ const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {
   return ss2.time_delta - ss1.time_delta;
 };
 
-const imageFile = process.argv[2] || "dontpeek.png";
+const imageFile = process.argv[2] || "input/dontpeek.png";
 
 main(imageFile);
