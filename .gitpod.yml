@@ -1,0 +1,4 @@
+tasks:
+  - init: npm install 
+    command: echo "Happy O11ydays! See the README for more instructions"
+
