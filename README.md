@@ -36,7 +36,9 @@ Choose "New Query" on the left navigation bar.
 
 Under "VISUALIZE" enter "heatmap(height)"
 
-For the time frame, select the last 10 minutes. // TODO: picture; this is hard to find
+For the time frame, select the last 10 minutes.
+
+![screenshot of query editor, as specified](docs/last-ten-minutes.png)
 
 You should see something, but it might not look like much yet.
 
@@ -44,13 +46,16 @@ You should see something, but it might not look like much yet.
 
 By default, the 10-minute heatmap looks at 1-second intervals. Let's make it group things into 5-second intervals.
 
-Click the timeframe dropdown again, but this time look past all the time options. At the bottom of that dropdown,
-there's a way to change the granularity.
-// TODO: get the instructions right. also picture
+Click the timeframe dropdown again, but this time look past all the time options. At the bottom of that dropdown, click "Granularity",
+and a submenu opens.
+
+![the granularity submenu](docs/granularity.png)
 
 Choose 5 seconds. Do you see a picture??
 
-Give the query a name so you can find it again! // picture
+Give the query a name so you can find it again!
+
+![click on name and description](docs/name-the-query.png)
 
 Copy the link in the URL bar, and send it to your coworkers.
 
@@ -60,9 +65,13 @@ When someone else looks at this dataset, you want them to see the picture too.
 Let's make it choose 5 seconds as the granularity automatically, so people
 don't have to change it every time.
 
-Go to Dataset Settings // TODO: instructions, picture.
+The right panel has a link to Dataset Settings. 
 
-Click on some stuff
+![link in right panel](docs/link-to-settings.png)
+
+In Dataset Settings for your Happy O11ydays dataset, choose the Overview tab, and find the Default Granularity. Choose 5 seconds.
+
+![overview tab](docs/default-granularity.png)
 
 ### Learning: what did we do here?
 
@@ -82,7 +91,8 @@ then the spot is darker.
 If you're graphing latency on of production requests, a dark spot might be 5000 events.
 In this toy dataset, there are at most 10 events for a particular 5-second interval and height value,
 so a dark spot is 10 events. The legend on the heatmap tells you how big the difference is.
-// TODO: picture
+
+![a more typical heatmap](docs/more-typical-heatmap.png)
 
 #### Granularity
 
@@ -109,7 +119,7 @@ Setting a default granularity to match will help everyone who queries that datas
 
 ## Bubble Up on Heatmap
 
-Here's a fun trick. What is different about the events that form [the eye]?
+Here's a fun trick. What is different about the events that form the second reindeer?
 
 Bring up your "heatmap(height)" graph. (You can always find your past queries in
 Activity History on the left nav.)
@@ -118,11 +128,11 @@ Activity History on the left nav.)
 
 Now click the Bubble Up tab.
 
-Now draw a box around [the eye].
+Now draw a box around the second reindeer.
 
 A bunch of little bar graphs appear below it!
 
-The bar graphs at the top represent attributes on the [eye] events
+The bar graphs at the top represent attributes on the second-reindeer events
 that are most different from the other events included in the heatmap.
 
 Each little bar graph tells you about one attribute.
@@ -140,12 +150,11 @@ out events by that attribute, to see what effect it has on the events.
 If this were a heatmap of latency, we'd be looking for what makes
 some events slower than others. Right now, we're just having fun.
 
-Click the top-left attribute. A little menu pops up; choose "Group by field" // TODO: get this right, picture
+Click the top-left attribute. A little menu pops up; choose "Group by field." (I'd include a picture, but spoilers)
 
 Look at the GROUP BY box in the query definition, and now that attribute is in there.
 
 Next, click the "Results" tab to get out of Bubble Up and see the groups.
-// picture of those two
 
 Notice the table of results underneath the graph.
 Each row represents one value of your attribute.
@@ -158,7 +167,11 @@ This makes it easy to see the difference that attribute makes in the distributio
 In real life, if your heatmap shows latency, and you're grouping on user_id,
 then hovering over rows might reveal that response times are much slower for a few particular users.
 
-...
+### Bubble Up on Group By
+
+Hover over one of the rows on the table, and then click the three dots. From there, select "Bubble up on (field name) = (value)".
+
+Now the events in this group are yellow. Does it look right? What else is different about these events, compared to the others?
 
 ## Use an Existing Account
 
@@ -183,5 +196,3 @@ To do this, be a team owner (or pair with one). Be in the development environmen
 Choose "Datasets" on the left nav. Then click the name of the dataset, like "viz-art" or whatever yours is called.
 This opens dataset settings. From here, one of the tabs at the top says "Delete." This tab has the button you want.
 
-
-## Delete the dataset
