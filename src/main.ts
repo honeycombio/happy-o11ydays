@@ -29,7 +29,6 @@ async function main(imageFile: string) {
   console.log(greeting);
 
   await initializeDataset();
-  return;
 
   const pixels = readImage(imageFile);
   console.log(`Read ${pixels.width}x${pixels.height} image from ${imageFile}`);
