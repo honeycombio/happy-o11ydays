@@ -15,6 +15,7 @@ const sdk = new NodeSDK({
     maxQueueSize: 16000,
     maxExportBatchSize: 1000,
   }),
+  // no instrumentations. All spans are manual here
 });
 
 export { sdk };

@@ -25,10 +25,10 @@ const greeting = ` _________________
 `;
 
 async function main(imageFile: string) {
+  await initializeDataset();
+
   await sdk.start();
   console.log(greeting);
-
-  await initializeDataset();
 
   const pixels = readImage(imageFile);
   console.log(`Read ${pixels.width}x${pixels.height} image from ${imageFile}`);

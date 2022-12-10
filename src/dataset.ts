@@ -3,7 +3,7 @@ import { fetchAuthorization, fetchConfiguration } from "./honeyApi";
 
 export async function initializeDataset() {
   const { dataset, apiKey } = fetchConfiguration();
-  if (!apiKey) {
+  if (!apiKey || !dataset) {
     return;
   }
   const headers = { "X-Honeycomb-Team": apiKey };
@@ -27,7 +27,7 @@ export async function initializeDataset() {
 const HappyO11ydaysDescription =
   "Happy O11ydays from Honeycomb! This dataset brought to you by: github.com/honeycombio/happy-o11ydays";
 
-async function createDataset(apiKey: string, dataset: string | undefined) {
+async function createDataset(apiKey: string, dataset: string) {
   const name = dataset === "happy-o11ydays" ? "Happy O11ydays" : dataset;
   const headers = { "X-Honeycomb-Team": apiKey };
   const datasetProperties = {
