@@ -115,7 +115,9 @@ type PossibleStackSpec = { stackHeight?: number; stackGroup?: string };
 export function addStackedGraphAttributes<T extends EnoughOfASpanSpec>(
   spanSpecs: T[]
 ): Array<T & PossibleStackSpec> {
-  var stackSpecCountByDelta = groupByTimeDelta(readSpecsFromImage("input/house.png")); // the array reference won't be mutated but its contents will be
+  var stackSpecCountByDelta = groupByTimeDelta(
+    readSpecsFromImage("input/house.png")
+  ); // the array reference won't be mutated but its contents will be
 
   const withStackSpecs = spanSpecs.map((ss) => {
     // do we have a need for a stack spec at this time?
@@ -171,14 +173,6 @@ function determineOrdering<T>(knownOrderings: T[][]): T[] {
     );
     var remainingColors = orderingsToLookAt.flat().filter(onlyUnique);
   }
-  // this is useful for creating a key
-  console.log(
-    JSON.stringify(
-      bottomToTop.map((c) => ({ colorKey: c, stackGroup: "" })),
-      null,
-      2
-    )
-  );
 
   return bottomToTop;
 }
