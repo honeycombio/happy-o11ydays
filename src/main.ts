@@ -12,6 +12,7 @@ import {
   HeatmapSpanSpec,
 } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
+import { initializeDataset } from "./dataset";
 
 const greeting = ` _________________ 
 < Happy O11ydays! >
@@ -26,6 +27,9 @@ const greeting = ` _________________
 async function main(imageFile: string) {
   await sdk.start();
   console.log(greeting);
+
+  await initializeDataset();
+  return;
 
   const pixels = readImage(imageFile);
   console.log(`Read ${pixels.width}x${pixels.height} image from ${imageFile}`);

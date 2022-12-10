@@ -1,6 +1,6 @@
 import axios from "axios";
 
-type AuthResponse = {
+export type AuthResponse = {
   api_key_access: {
     events: boolean;
     markers: boolean;
@@ -20,13 +20,29 @@ type AuthResponse = {
   };
 };
 
-export async function findLinkToDataset(): Promise<string | undefined> {
+export async function fetchAuthorization(apiKey: string) {
+  const resp = await axios
+    .get<AuthResponse>("https://api.honeycomb.io/1/auth", {
+      responseType: "json",
+      headers: { "X-Honeycomb-Team": apiKey },
+    })
+    .catch((e) => e.response);
+  if (resp.status !== 200) {
+    console.log(
+      "WARNING: Could not retrieve team/env data from APIKEY. " + resp.status
+    );
+    return undefined;
+  }
+
+  return resp.data;
+}
+
+export function fetchConfiguration() {
   const apiKey = process.env["HONEYCOMB_API_KEY"];
   if (!apiKey) {
     console.log(
       "Warning: HONEYCOMB_API_KEY not defined, so I can't give you a link"
     );
-    return undefined;
   }
   const dataset = process.env["OTEL_SERVICE_NAME"];
   if (!dataset) {
@@ -34,18 +50,24 @@ export async function findLinkToDataset(): Promise<string | undefined> {
       "Warning: OTEL_SERVICE_NAME not defined, so I can't link you to your dataset"
     );
   }
-  try {
-    const resp = await axios.get<AuthResponse>(
-      "https://api.honeycomb.io/1/auth",
-      { responseType: "json", headers: { "X-Honeycomb-Team": apiKey } }
-    );
+  return {
+    dataset,
+    apiKey,
+  };
+}
 
-    const authData = resp.data;
-    const datasetPortion = dataset ? `/datasets/${dataset}` : "";
-
-    return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}`;
-  } catch (e) {
-    console.log("Warning: couldn't retrieve honeycomb auth info.");
-    console.error(e);
+export async function findLinkToDataset(): Promise<string | undefined> {
+  const { dataset, apiKey } = fetchConfiguration();
+  if (!apiKey) {
+    return undefined;
   }
+
+  const authData = await fetchAuthorization(apiKey);
+  if (authData === undefined) {
+    console.log("Warning: couldn't retrieve honeycomb auth info.");
+    return undefined;
+  }
+  const datasetPortion = dataset ? `/datasets/${dataset}` : "";
+
+  return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}/${datasetPortion}`;
 }
