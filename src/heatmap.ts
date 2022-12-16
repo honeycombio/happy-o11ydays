@@ -67,3 +67,20 @@ export function placeHorizontallyInBucket(
 ): HrTime {
   return [begin + howFarToTheRight * Granularity, increment * 1000];
 }
+
+type FractionOfGranularity = number;
+export function planEndTime(
+  startTime: HrTime,
+  duration: FractionOfGranularity
+): HrTime {
+  return addSecondsToHrTime(startTime, duration * Granularity);
+}
+
+function addSecondsToHrTime(start: HrTime, seconds: number): HrTime {
+  const [sec, ns] = start;
+
+  const additionalSeconds = Math.floor(seconds);
+  const additionalNanos = (seconds - additionalSeconds) * 1000000;
+
+  return [sec + additionalSeconds, ns + additionalNanos];
+}

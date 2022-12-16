@@ -10,6 +10,7 @@ import {
   placeVerticallyInBuckets,
   SecondsSinceEpoch,
   HeatmapSpanSpec,
+  planEndTime,
 } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
@@ -88,11 +89,13 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
     (rootSpan) => {
       // create all the spans for the picture
       spanSpecs.sort(byTime).forEach((ss) => {
+        const startTime = placeHorizontallyInBucket(begin, ss.time_delta, ss.increment);
         const s = tracer.startSpan("la", {
-          startTime: placeHorizontallyInBucket(begin, ss.time_delta, ss.increment),
+          startTime,
           attributes: ss,
         });
-        s.end();
+        const endTime = planEndTime(startTime, ss.duration)
+        s.end(endTime);
       });
       traceId = rootSpan.spanContext().traceId;
       rootSpan.end();
@@ -108,8 +111,9 @@ const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {
 const imageFile = process.argv[2] || "input/dontpeek.png";
 
 main(imageFile);
-type TraceSpanSpec = { increment: number }
-function addTraceArtSpecs<T extends { time_delta: number }>(
+export type FractionOfGranularity = number;
+export type TraceSpanSpec = { increment: number, duration: FractionOfGranularity }
+export function addTraceArtSpecs<T extends { time_delta: number }>(
   graphSpanSpecs: T[]
 ): Array<T & TraceSpanSpec> {
   class IncrementMarker {
@@ -121,7 +125,7 @@ function addTraceArtSpecs<T extends { time_delta: number }>(
         this.previous_time_delta = ss.time_delta;
         this.increment = 0;
       }
-      return { ...ss, increment: this.increment++ };
+      return { ...ss, increment: this.increment++, duration: 1 / this.increment };
     }
   }
 
