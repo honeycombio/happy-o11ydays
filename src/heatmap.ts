@@ -62,7 +62,8 @@ export function placeVerticallyInBuckets(
 
 export function placeHorizontallyInBucket(
   begin: SecondsSinceEpoch,
-  howFarToTheRight: number
+  howFarToTheRight: number,
+  increment: number
 ): HrTime {
-  return [begin + howFarToTheRight * Granularity, 0];
+  return [begin + howFarToTheRight * Granularity, increment * 1000];
 }

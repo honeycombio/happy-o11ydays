@@ -47,7 +47,7 @@ async function main(imageFile: string) {
   setTimeout(() => console.log(" hopefully they've all been sent)"), 10000);
 }
 
-type SpanSpec = HeatmapSpanSpec & Record<string, number | string>;
+type SpanSpec = HeatmapSpanSpec & TraceSpanSpec & Record<string, number | string>;
 
 function planSpans(pixels: Pixels): SpanSpec[] {
   const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
@@ -71,7 +71,8 @@ function planSpans(pixels: Pixels): SpanSpec[] {
     })
     .flat();
 
-  const spanSpecs = addStackedGraphAttributes(heatmapSpanSpecs);
+  const graphSpanSpecs = addStackedGraphAttributes(heatmapSpanSpecs);
+  const spanSpecs = addTraceArtSpecs(graphSpanSpecs);
 
   return spanSpecs;
 }
@@ -79,7 +80,7 @@ function planSpans(pixels: Pixels): SpanSpec[] {
 type TraceID = string;
 const tracer = otel.trace.getTracer("viz-art");
 function sendSpans(spanSpecs: SpanSpec[]): TraceID {
-  const begin: SecondsSinceEpoch = Date.now() / 1000;
+  const begin: SecondsSinceEpoch = Math.ceil(Date.now() / 1000);
   var traceId: string;
   // the root span has no height, so it doesn't appear in the heatmap
   return tracer.startActiveSpan(
@@ -88,7 +89,7 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
       // create all the spans for the picture
       spanSpecs.sort(byTime).forEach((ss) => {
         const s = tracer.startSpan("la", {
-          startTime: placeHorizontallyInBucket(begin, ss.time_delta),
+          startTime: placeHorizontallyInBucket(begin, ss.time_delta, ss.increment),
           attributes: ss,
         });
         s.end();
@@ -107,3 +108,30 @@ const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {
 const imageFile = process.argv[2] || "input/dontpeek.png";
 
 main(imageFile);
+type TraceSpanSpec = { increment: number }
+function addTraceArtSpecs<T extends { time_delta: number }>(
+  graphSpanSpecs: T[]
+): Array<T & TraceSpanSpec> {
+  class IncrementMarker {
+    private previous_time_delta: number = -500000; // nonsense
+    private increment: number = 0;
+    public mark: (ss: T) => T & TraceSpanSpec = (ss: T) => {
+      if (ss.time_delta !== this.previous_time_delta) {
+        // reset
+        this.previous_time_delta = ss.time_delta;
+        this.increment = 0;
+      }
+      return { ...ss, increment: this.increment++ };
+    }
+  }
+
+  function byTimeDelta(a: { time_delta: number }, b: { time_delta: number }) {
+    return b.time_delta - a.time_delta;
+  }
+
+  const orderedSpecs = graphSpanSpecs
+    .sort(byTimeDelta)
+    .map(new IncrementMarker().mark);
+
+  return orderedSpecs;
+}
