@@ -1,3 +1,5 @@
+import { readImage } from "./image";
+
 export type FractionOfGranularity = number;
 export type TraceSpanSpec = { increment: number, duration: FractionOfGranularity }
 export function addTraceArtSpecs<T extends { time_delta: number }>(
@@ -25,4 +27,10 @@ export function addTraceArtSpecs<T extends { time_delta: number }>(
     .map(new IncrementMarker().mark);
 
   return orderedSpecs;
+}
+
+function readImageData(filename: string) {
+  const pixels = readImage(filename);
+
+  
 }
