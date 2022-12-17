@@ -54,11 +54,19 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
   const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
+  const maxTimeDelta = Math.max(...spans.map((s) => s.time_delta)); // should be 0
+  const totalWaterfallWidth = maxTimeDelta - minTimeDelta;
+  const waterfallImageWidth = Math.max(
+    ...waterfallImageDescription.map((w) => w.start + w.width)
+  );
+  const waterfallImagePixelWidth = Math.floor(
+    totalWaterfallWidth / waterfallImageWidth
+  );
   const waterfallImageSpecs1 = waterfallImageDescription.map((w, i) => ({
     waterfallImageName,
     waterfallRow: i,
-    time_delta: w.start + minTimeDelta,
-    waterfallWidth: w.width,
+    time_delta: w.start * waterfallImagePixelWidth + minTimeDelta,
+    waterfallWidth: w.width * waterfallImagePixelWidth,
   }));
   const availableSpans = groupByTimeDelta(spans);
   const waterfallImageSpecs2 = waterfallImageSpecs1.map((w) => {
