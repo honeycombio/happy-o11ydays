@@ -1,4 +1,4 @@
-import { Pixels, readImage } from "./image";
+import { Pixel, Pixels, readImage } from "./image";
 
 type HasTimeDelta = { time_delta: DistanceFromRight };
 export type FractionOfGranularity = number;
@@ -7,8 +7,8 @@ export type TraceSpanSpec = {
   waterfallWidth: FractionOfGranularity;
   popBefore: number;
   popAfter: number;
-  spanEvent: boolean;
-};
+} & MightBeASpanEvent;
+type MightBeASpanEvent = { spanEvent: boolean };
 
 type WaterfallImageRow = { start: number; width: number; sparkle?: boolean };
 type DistanceFromRight = number; // nonpositive integer
@@ -144,15 +144,20 @@ function proportion<T extends HasTimeDelta>(
 function readImageData(filename: string): WaterfallImageRow[] {
   const pixels = readImage(filename);
 
+  function hasSomeBlue(p: Pixel): boolean {
+    // exclude white
+    return p.color.blue > 0 && p.color.darkness() > 0;
+  }
+
   const rows = range(0, pixels.height).map((y) => {
-    const start = range(0, pixels.width).find(
-      (x) => pixels.at(x, y).color.blue > 0
+    const start = range(0, pixels.width).find((x) =>
+      hasSomeBlue(pixels.at(x, y))
     );
     if (start === undefined) {
       return undefined; // filter these out later
     }
     const possibleWidth = range(start, pixels.width).findIndex(
-      (x) => pixels.at(x, y).color.blue === 0
+      (x) => !hasSomeBlue(pixels.at(x, y))
     );
     const width = possibleWidth === -1 ? pixels.width - start : possibleWidth;
     return [
@@ -170,7 +175,7 @@ function readImageData(filename: string): WaterfallImageRow[] {
 function findSparkles(pixels: Pixels, y: number): WaterfallImageRow[] {
   return range(0, pixels.width)
     .map((x) => pixels.at(x, y))
-    .filter((p) => p.color.red > 0)
+    .filter((p) => p.color.red > 0 && p.color.darkness() > 0)
     .map((p) => ({ start: p.location.x, width: 0, sparkle: true }));
 }
 
@@ -191,7 +196,9 @@ function groupByTimeDelta<T extends HasTimeDelta>(
   }, {} as Record<number, T[]>);
 }
 
-function determineTreeStructure<T extends HasTimeDelta>(specsSoFar: T[]) {
+function determineTreeStructure<T extends HasTimeDelta & MightBeASpanEvent>(
+  specsSoFar: T[]
+) {
   var parentTimeDeltas: Array<{
     time_delta: DistanceFromRight;
     increment: number;
@@ -202,6 +209,10 @@ function determineTreeStructure<T extends HasTimeDelta>(specsSoFar: T[]) {
     var increment: number = 0;
     if (i === 0) {
       // this is the root of the image
+      popBefore = 1; // this is the default. Sibling of whatever is above.
+      increment = 0; // random placement :-/
+    } else if (w.spanEvent) {
+      // it does not participate in the tree structure
       popBefore = 1; // this is the default. Sibling of whatever is above.
       increment = 0; // random placement :-/
     } else {
@@ -234,7 +245,7 @@ type FoundASpotError =
   | "Give up, there's no way this is gonna fit"
   | null;
 type FoundASpot<T extends HasTimeDelta> = {
-  waterfallImageSpans: T[];
+  waterfallImageSpans: Array<T & MightBeASpanEvent>;
   availableSpans: T[];
 };
 type PossibleFits<T extends HasTimeDelta> =
