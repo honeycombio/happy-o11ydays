@@ -40,21 +40,6 @@ function range(startInclusive: number, endExclusive: number) {
   return [...Array(endExclusive).keys()].map((x) => x + startInclusive);
 }
 
-const waterfallImageDescription = [
-  { start: 4, width: 1 },
-  { start: 4, width: 1 },
-  { start: 3, width: 3 },
-  { start: 2, width: 5 },
-  { start: 1, width: 7 },
-  { start: 1, width: 7 },
-  { start: 0, width: 9 },
-  { start: 0, width: 9 },
-  { start: 0, width: 9 },
-  { start: 1, width: 7 },
-  { start: 1, width: 7 },
-  { start: 2, width: 5 },
-  { start: 3, width: 3 },
-];
 const waterfallImageName = "ornament";
 
 type StartToTimeDelta = (start: number) => DistanceFromRight;
@@ -75,10 +60,7 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     ...readImageData("input/ornament.png"),
   ];
 
-  var fitError:
-    | "Not enough room"
-    | "Give up, there's no way this is gonna fit"
-    | null = "Not enough room";
+  var fitError: FoundASpotError = "Not enough room";
   var fitResult: FoundASpot<T> | null = null;
   var incrementFromTheLeft = 0;
   while (fitError === "Not enough room") {
@@ -116,6 +98,7 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
 
 function proportion<T extends HasTimeDelta>(
   spans: T[],
+  waterfallImageDescription: WaterfallImageRow[],
   increment: number
 ):
   | {
@@ -194,6 +177,10 @@ function determineTreeStructure<T extends HasTimeDelta>(specsSoFar: T[]) {
   return waterfallImageSpecs3;
 }
 
+type FoundASpotError =
+  | "Not enough room"
+  | "Give up, there's no way this is gonna fit"
+  | null;
 type FoundASpot<T extends HasTimeDelta> = {
   waterfallImageSpans: T[];
   availableSpans: T[];
@@ -211,7 +198,11 @@ function findASpot<T extends HasTimeDelta>(
   console.log(
     `BEGIN: there are ${spans.length} spans, and increment is ${incrementFromTheLeft}`
   );
-  const fitWithinImage = proportion(spans, incrementFromTheLeft);
+  const fitWithinImage = proportion(
+    spans,
+    waterfallImageDescription,
+    incrementFromTheLeft
+  );
   if (fitWithinImage === "Give up, there's no way this is gonna fit") {
     return [null, "Give up, there's no way this is gonna fit"];
   }
