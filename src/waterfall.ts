@@ -88,59 +88,69 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     return { ...w, allocatedSpan };
   });
   // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
-  var parentTimeDeltas: DistanceFromRight[] = [];
+
+  var parentTimeDeltas: Array<{
+    time_delta: DistanceFromRight;
+    increment: number;
+  }> = [];
   const waterfallImageSpecs3 = waterfallImageSpecs2.map((w) => {
     // if the one above me is to the right, don't pop any.
     var popBefore: DistanceFromRight;
+    var increment: number = 0;
     if (w.waterfallImageRoot) {
       popBefore = 1; // this is the default. Sibling of whatever is above.
+      increment = 0; // random placement :-/
     } else {
       // clean this up later
       const theRowAboveMe = parentTimeDeltas[0];
       if (theRowAboveMe === undefined) {
         throw new Error("wtf");
       }
-      if (theRowAboveMe > w.time_delta) {
+      if (theRowAboveMe.time_delta > w.time_delta) {
         // I must be its child, or I can't start before it does and also appear below it
         popBefore = 0;
+        increment = 0;
       } else {
         // I can be a sibling, because I start later or at the same time.
         // but! I might be able to pop again
         popBefore = 0;
-        while (parentTimeDeltas[0] <= w.time_delta) {
+        increment = 1;
+        while (
+          parentTimeDeltas[0].time_delta <= w.time_delta &&
+          parentTimeDeltas.length > 1 // always be a child of the root please
+        ) {
+          increment = parentTimeDeltas[0].increment + 1;
           popBefore++;
           parentTimeDeltas.shift();
         }
       }
     }
-    parentTimeDeltas.unshift(w.time_delta);
+    parentTimeDeltas.unshift({ time_delta: w.time_delta, increment });
     return {
       ...w,
       popBefore,
       popAfter: 0,
+      increment,
     };
   });
   // any remaining parents, we need to pop them after for cleanup.
   waterfallImageSpecs3[waterfallImageSpecs3.length - 1].popAfter =
     parentTimeDeltas.length;
 
-  type SpecsWithoutIncrement = T & Omit<TraceSpanSpec, "increment">;
-  const waterfallImageSpans: SpecsWithoutIncrement[] = waterfallImageSpecs3.map(
-    (w) => {
-      const { allocatedSpan, ...rest } = w;
-      return {
-        ...allocatedSpan,
-        ...rest,
-      };
-    }
-  );
+  const waterfallImageSpans = waterfallImageSpecs3.map((w) => {
+    const { allocatedSpan, ...rest } = w;
+    return {
+      ...allocatedSpan,
+      ...rest,
+    };
+  });
 
   const allSpans: Array<T & TraceSpanSpec> = [
     ...waterfallImageSpans,
     // ...Object.values(availableSpans)
     //   .flat()
     //   .map((s) => ({ ...s, waterfallWidth: 1, popBefore: 1, popAfter: 0 })),
-  ].map(new IncrementMarker<SpecsWithoutIncrement>().mark);
+  ];
 
   return allSpans;
 }
