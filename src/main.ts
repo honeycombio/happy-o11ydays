@@ -96,11 +96,9 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
       // create all the spans for the picture
       var parentSpans: Array<[Span, HrTime]> = [];
       spanSpecs.sort(byTime).forEach((ss) => {
-        const [parent, parentEndTime] = parentSpans.pop() || [
-          undefined,
-          undefined,
-        ]; // the first time it'll be empty
-        parent?.end(parentEndTime);
+        if (!ss.childOfPrevious) {
+          drainAll(parentSpans);
+        }
         const startTime = placeHorizontallyInBucket(
           begin,
           ss.time_delta,
@@ -113,12 +111,21 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
         const endTime = planEndTime(startTime, ss.waterfallWidth);
         parentSpans.push([s, endTime]);
       });
-      parentSpans.forEach(([s, endTime]) => s.end(endTime));
+      drainAll(parentSpans);
       traceId = rootSpan.spanContext().traceId;
       rootSpan.end();
       return traceId;
     }
   );
+}
+
+// mutates its input
+function drainAll(parentSpans: Array<[Span, HrTime]>) {
+  var endme;
+  while ((endme = parentSpans.pop())) {
+    const [s, endTime] = endme;
+    s.end(endTime);
+  }
 }
 
 const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {
