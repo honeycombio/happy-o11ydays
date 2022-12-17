@@ -69,39 +69,7 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     return { ...w, allocatedSpan };
   });
   // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
-
-  var parentTimeDeltas: Array<{
-    time_delta: DistanceFromRight;
-    increment: number;
-  }> = [];
-  const waterfallImageSpecs3 = waterfallImageSpecs2.map((w) => {
-    // if the one above me is to the right, don't pop any.
-    var popBefore: DistanceFromRight = 0;
-    var increment: number = 0;
-    if (w.waterfallImageRoot) {
-      popBefore = 1; // this is the default. Sibling of whatever is above.
-      increment = 0; // random placement :-/
-    } else {
-      while (
-        parentTimeDeltas[0].time_delta <= w.time_delta &&
-        parentTimeDeltas.length > 1 // always be a child of the root please
-      ) {
-        increment = parentTimeDeltas[0].increment + 1;
-        popBefore++;
-        parentTimeDeltas.shift();
-      }
-    }
-    parentTimeDeltas.unshift({ time_delta: w.time_delta, increment });
-    return {
-      ...w,
-      popBefore,
-      popAfter: 0,
-      increment,
-    };
-  });
-  // any remaining parents, we need to pop them after for cleanup.
-  waterfallImageSpecs3[waterfallImageSpecs3.length - 1].popAfter =
-    parentTimeDeltas.length;
+  const waterfallImageSpecs3 = determineTreeStructure(waterfallImageSpecs2);
 
   const waterfallImageSpans = waterfallImageSpecs3.map((w) => {
     const { allocatedSpan, ...rest } = w;
@@ -135,4 +103,42 @@ function groupByTimeDelta<T extends HasTimeDelta>(
     p[k].push(c);
     return p;
   }, {} as Record<number, T[]>);
+}
+
+function determineTreeStructure<T extends HasTimeDelta>(specsSoFar: T[]) {
+  var parentTimeDeltas: Array<{
+    time_delta: DistanceFromRight;
+    increment: number;
+  }> = [];
+  const waterfallImageSpecs3 = specsSoFar.map((w, i) => {
+    // if the one above me is to the right, don't pop any.
+    var popBefore: DistanceFromRight = 0;
+    var increment: number = 0;
+    if (i === 0) {
+      // this is the root of the image
+      popBefore = 1; // this is the default. Sibling of whatever is above.
+      increment = 0; // random placement :-/
+    } else {
+      while (
+        parentTimeDeltas[0].time_delta <= w.time_delta &&
+        parentTimeDeltas.length > 1 // always be a child of the root please
+      ) {
+        increment = parentTimeDeltas[0].increment + 1;
+        popBefore++;
+        parentTimeDeltas.shift();
+      }
+    }
+    parentTimeDeltas.unshift({ time_delta: w.time_delta, increment });
+    return {
+      ...w,
+      popBefore,
+      popAfter: 0,
+      increment,
+    };
+  });
+  // any remaining parents, we need to pop them after for cleanup.
+  waterfallImageSpecs3[waterfallImageSpecs3.length - 1].popAfter =
+    parentTimeDeltas.length;
+
+  return waterfallImageSpecs3;
 }
