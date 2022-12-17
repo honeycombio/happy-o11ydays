@@ -42,7 +42,7 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     ...waterfallImageDescription.map((w) => w.start + w.width)
   );
   const waterfallImagePixelWidth = Math.floor(
-    totalWaterfallWidth / waterfallImageWidth
+    (totalWaterfallWidth / waterfallImageWidth) * 0.6
   );
   const waterfallImageDescriptionWithRoot = [
     { start: 0, width: 0 },
@@ -76,34 +76,19 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
   }> = [];
   const waterfallImageSpecs3 = waterfallImageSpecs2.map((w) => {
     // if the one above me is to the right, don't pop any.
-    var popBefore: DistanceFromRight;
+    var popBefore: DistanceFromRight = 0;
     var increment: number = 0;
     if (w.waterfallImageRoot) {
       popBefore = 1; // this is the default. Sibling of whatever is above.
       increment = 0; // random placement :-/
     } else {
-      // clean this up later
-      const theRowAboveMe = parentTimeDeltas[0];
-      if (theRowAboveMe === undefined) {
-        throw new Error("wtf");
-      }
-      if (theRowAboveMe.time_delta > w.time_delta) {
-        // I must be its child, or I can't start before it does and also appear below it
-        popBefore = 0;
-        increment = 0;
-      } else {
-        // I can be a sibling, because I start later or at the same time.
-        // but! I might be able to pop again
-        popBefore = 0;
-        increment = 1;
-        while (
-          parentTimeDeltas[0].time_delta <= w.time_delta &&
-          parentTimeDeltas.length > 1 // always be a child of the root please
-        ) {
-          increment = parentTimeDeltas[0].increment + 1;
-          popBefore++;
-          parentTimeDeltas.shift();
-        }
+      while (
+        parentTimeDeltas[0].time_delta <= w.time_delta &&
+        parentTimeDeltas.length > 1 // always be a child of the root please
+      ) {
+        increment = parentTimeDeltas[0].increment + 1;
+        popBefore++;
+        parentTimeDeltas.shift();
       }
     }
     parentTimeDeltas.unshift({ time_delta: w.time_delta, increment });
