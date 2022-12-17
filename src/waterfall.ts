@@ -1,9 +1,7 @@
 import { readImage } from "./image";
 
-export type FractionOfGranularity = number;
-
-type DistanceFromRight = number; // nonpositive integer
 type HasTimeDelta = { time_delta: DistanceFromRight };
+export type FractionOfGranularity = number;
 export type TraceSpanSpec = {
   increment: number;
   waterfallWidth: FractionOfGranularity;
@@ -12,34 +10,7 @@ export type TraceSpanSpec = {
 };
 
 type WaterfallImageRow = { start: number; width: number };
-
-function readImageData(filename: string): WaterfallImageRow[] {
-  const pixels = readImage(filename);
-
-  const rows = range(0, pixels.height).map((y) => {
-    const start = range(0, pixels.width).find(
-      (x) => pixels.at(x, y).color.darkness() > 0
-    );
-    if (start === undefined) {
-      return undefined;
-    }
-    const possibleWidth = range(start, pixels.width).findIndex(
-      (x) => pixels.at(x, y).color.darkness() === 0
-    );
-    const width = possibleWidth === -1 ? pixels.width - start : possibleWidth;
-    return {
-      start,
-      width,
-    };
-  });
-
-  return rows.filter((x) => x !== undefined) as WaterfallImageRow[]; // typescript, you're wrong
-}
-
-function range(startInclusive: number, endExclusive: number) {
-  return [...Array(endExclusive).keys()].map((x) => x + startInclusive);
-}
-
+type DistanceFromRight = number; // nonpositive integer
 type StartToTimeDelta = (start: number) => DistanceFromRight;
 type WidthToWaterfallWidth = (width: number) => FractionOfGranularity;
 
@@ -50,7 +21,6 @@ const nothingSpecialOnTheWaterfall = {
   increment: 1,
 };
 
-("ornament");
 type ImageSource = { filename: string; waterfallImageName: string };
 const IMAGE_SOURCES = Array(30).fill({
   filename: "input/ornament.png",
@@ -59,13 +29,27 @@ const IMAGE_SOURCES = Array(30).fill({
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
-  const [{ imageSpans, rest }, err] = buildOnePicture(spans, IMAGE_SOURCES[0]);
-  if (err) {
-    throw err;
-  }
+  const result = iteratron(
+    IMAGE_SOURCES,
+    (resultsSoFar, img, i) => {
+      const [newResult, err] = buildOnePicture(resultsSoFar.rest, img);
+      if (err) {
+        console.log("Well, we got to image #" + i);
+        return "stop";
+      }
+      return {
+        imageSpans: [...resultsSoFar.imageSpans, ...newResult.imageSpans],
+        rest: newResult.rest,
+      };
+    },
+    {
+      imageSpans: [] as Array<T & TraceSpanSpec>,
+      rest: spans,
+    }
+  );
   return [
-    ...imageSpans,
-    ...rest.map((s) => ({ ...s, ...nothingSpecialOnTheWaterfall })),
+    ...result.imageSpans,
+    ...result.rest.map((s) => ({ ...s, ...nothingSpecialOnTheWaterfall })),
   ];
 }
 
@@ -95,7 +79,10 @@ function buildOnePicture<T extends HasTimeDelta>(
     if (fitError === "Give up, there's no way this is gonna fit") {
       console.log("Unable to fit picture...");
       // we are done putting images in there
-      throw "Give up, there's no way this is gonna fit";
+      return [
+        { imageSpans: [], rest: spans },
+        "Give up, there's no way this is gonna fit",
+      ];
     }
   }
 
@@ -150,6 +137,33 @@ function proportion<T extends HasTimeDelta>(
       start * waterfallImagePixelWidth + minTimeDelta + increment,
     calculateWidth: (width: number) => width * waterfallImagePixelWidth,
   };
+}
+
+function readImageData(filename: string): WaterfallImageRow[] {
+  const pixels = readImage(filename);
+
+  const rows = range(0, pixels.height).map((y) => {
+    const start = range(0, pixels.width).find(
+      (x) => pixels.at(x, y).color.darkness() > 0
+    );
+    if (start === undefined) {
+      return undefined;
+    }
+    const possibleWidth = range(start, pixels.width).findIndex(
+      (x) => pixels.at(x, y).color.darkness() === 0
+    );
+    const width = possibleWidth === -1 ? pixels.width - start : possibleWidth;
+    return {
+      start,
+      width,
+    };
+  });
+
+  return rows.filter((x) => x !== undefined) as WaterfallImageRow[]; // typescript, you're wrong
+}
+
+function range(startInclusive: number, endExclusive: number) {
+  return [...Array(endExclusive).keys()].map((x) => x + startInclusive);
 }
 
 function groupByTimeDelta<T extends HasTimeDelta>(
@@ -274,4 +288,25 @@ function findASpot<T extends HasTimeDelta>(
     if (e === "Not enough room") return [null, e];
     throw e; // unexpected
   }
+}
+
+// what I really want is an iteratee, so I'll just make one
+function iteratron<T, R>(
+  arr: T[],
+  fn: (prev: R, e: T, i: number) => R | "stop",
+  init: R
+): R {
+  var stopYet = false;
+  var i = 0;
+  var output = init;
+  while (!stopYet) {
+    const result = fn(output, arr[i], i);
+    if (result === "stop") {
+      stopYet = true;
+    } else {
+      output = result;
+    }
+    i++;
+  }
+  return output;
 }
