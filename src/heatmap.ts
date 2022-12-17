@@ -8,9 +8,9 @@ export const Granularity: Seconds = 5;
 
 
 type CountOfSpans = number; // 0 to maxSpansAtOnePoint
-type NegativeIntegerPixelsFromLeft = number;
+type NegativeIntegerPixelsFromRight = number;
 export type HeatmapSpanSpec = {
-  time_delta: NegativeIntegerPixelsFromLeft;
+  time_delta: NegativeIntegerPixelsFromRight;
   height: number;
   spans_at_once: CountOfSpans;
 };

@@ -14,7 +14,7 @@ import {
 } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
-import { addTraceArtSpecs, TraceSpanSpec } from "./waterfall";
+import { addTraceArtSpecs, buildPictureInWaterfall, TraceSpanSpec } from "./waterfall";
 
 const greeting = ` _________________ 
 < Happy O11ydays! >
@@ -49,7 +49,9 @@ async function main(imageFile: string) {
   setTimeout(() => console.log(" hopefully they've all been sent)"), 10000);
 }
 
-type SpanSpec = HeatmapSpanSpec & TraceSpanSpec & Record<string, number | string>;
+type SpanSpec = HeatmapSpanSpec &
+  TraceSpanSpec &
+  Record<string, number | string>;
 
 function planSpans(pixels: Pixels): SpanSpec[] {
   const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
@@ -74,7 +76,7 @@ function planSpans(pixels: Pixels): SpanSpec[] {
     .flat();
 
   const graphSpanSpecs = addStackedGraphAttributes(heatmapSpanSpecs);
-  const spanSpecs = addTraceArtSpecs(graphSpanSpecs);
+  const spanSpecs = buildPictureInWaterfall(graphSpanSpecs);
 
   return spanSpecs;
 }
@@ -90,12 +92,16 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
     (rootSpan) => {
       // create all the spans for the picture
       spanSpecs.sort(byTime).forEach((ss) => {
-        const startTime = placeHorizontallyInBucket(begin, ss.time_delta, ss.increment);
+        const startTime = placeHorizontallyInBucket(
+          begin,
+          ss.time_delta,
+          ss.increment
+        );
         const s = tracer.startSpan("la", {
           startTime,
           attributes: ss,
         });
-        const endTime = planEndTime(startTime, ss.duration)
+        const endTime = planEndTime(startTime, ss.duration);
         s.end(endTime);
       });
       traceId = rootSpan.spanContext().traceId;
@@ -112,4 +118,3 @@ const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {
 const imageFile = process.argv[2] || "input/dontpeek.png";
 
 main(imageFile);
-
