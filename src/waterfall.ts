@@ -50,8 +50,8 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
     }
   );
   return [
-    ...result.imageSpans,
     ...result.rest.map((s) => ({ ...s, ...nothingSpecialOnTheWaterfall })),
+    ...result.imageSpans,
   ];
 }
 

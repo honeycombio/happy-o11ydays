@@ -107,7 +107,7 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
           // something completely different
           openSpan.addEvent("sparkle", ss, startTime);
         } else {
-          if (i > 0) {
+          if (openSpan !== rootSpan) {
             openSpan.end(openSpanEndTime);
           }
           for (var i = 0; i < ss.popBefore; i++) {
