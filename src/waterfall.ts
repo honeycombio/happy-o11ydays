@@ -53,14 +53,29 @@ const nothingSpecialOnTheWaterfall = {
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
-  return buildOnePicture(spans, "input/ornament.png", "ornament");
+  const [{ imageSpans, rest }, err] = buildOnePicture(
+    spans,
+    "input/ornament.png",
+    "ornament"
+  );
+  if (err) {
+    throw err;
+  }
+  return [
+    ...imageSpans,
+    ...rest.map((s) => ({ ...s, ...nothingSpecialOnTheWaterfall })),
+  ];
 }
 
+type BuildOnePictureOutcome<T extends HasTimeDelta> = [
+  { imageSpans: Array<T & TraceSpanSpec>; rest: T[] },
+  "Give up, there's no way this is gonna fit" | null
+];
 function buildOnePicture<T extends HasTimeDelta>(
   spans: T[],
   filename: string,
-  imageName: string
-): Array<T & TraceSpanSpec> {
+  waterfallImageName: string
+): BuildOnePictureOutcome<T> {
   const waterfallImageDescriptionWithRoot = [
     { start: 0, width: 0 }, // invent an early root span because I want this at the top of the trace
     ...readImageData(filename),
@@ -94,12 +109,16 @@ function buildOnePicture<T extends HasTimeDelta>(
     waterfallImageSpans
   ) as Array<T & TraceSpanSpec>; // fuck you typescript, i have spent too much time fighting you
 
-  const unusedSpans = availableSpans.map((s) => ({
-    ...s,
-    ...nothingSpecialOnTheWaterfall,
-  }));
-
-  return [...waterfallImageSpecs3, ...unusedSpans];
+  return [
+    {
+      imageSpans: waterfallImageSpecs3.map((s) => ({
+        ...s,
+        waterfallImageName,
+      })),
+      rest: availableSpans,
+    },
+    null,
+  ];
 }
 
 function proportion<T extends HasTimeDelta>(
@@ -214,7 +233,6 @@ function findASpot<T extends HasTimeDelta>(
   }
   const { calculateWidth, calculateTimeDelta } = fitWithinImage;
   const waterfallImageSpecs1 = waterfallImageDescription.map((w, i) => ({
-    waterfallImageName,
     waterfallRow: i,
     time_delta: calculateTimeDelta(w.start),
     waterfallWidth: calculateWidth(w.width),
