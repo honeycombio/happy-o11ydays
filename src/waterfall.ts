@@ -11,8 +11,33 @@ export type TraceSpanSpec = {
   popAfter: number;
 };
 
-function readImageData(filename: string) {
+type WaterfallImageRow = { start: number; width: number };
+
+function readImageData(filename: string): WaterfallImageRow[] {
   const pixels = readImage(filename);
+
+  const rows = range(0, pixels.height).map((y) => {
+    const start = range(0, pixels.width).find(
+      (x) => pixels.at(x, y).color.darkness() > 0
+    );
+    if (start === undefined) {
+      return undefined;
+    }
+    const possibleWidth = range(start, pixels.width).findIndex(
+      (x) => pixels.at(x, y).color.darkness() === 0
+    );
+    const width = possibleWidth === -1 ? pixels.width - start : possibleWidth;
+    return {
+      start,
+      width,
+    };
+  });
+
+  return rows.filter((x) => x !== undefined) as WaterfallImageRow[]; // typescript, you're wrong
+}
+
+function range(startInclusive: number, endExclusive: number) {
+  return [...Array(endExclusive).keys()].map((x) => x + startInclusive);
 }
 
 const waterfallImageDescription = [
@@ -42,7 +67,7 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
 
   const waterfallImageDescriptionWithRoot = [
     { start: 0, width: 0 }, // invent an early root span because I want this at the top of the trace
-    ...waterfallImageDescription,
+    ...readImageData("input/ornament.png"),
   ];
   const waterfallImageSpecs1 = waterfallImageDescriptionWithRoot.map(
     (w, i) => ({
@@ -54,11 +79,14 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     })
   );
   const availableSpans = groupByTimeDelta(spans);
-  const waterfallImageSpecs2 = waterfallImageSpecs1.map((w) => {
+  const waterfallImageSpecs2 = waterfallImageSpecs1.map((w, i) => {
     // mutating
     const allocatedSpan = availableSpans[w.time_delta].pop();
     if (allocatedSpan === undefined) {
       // time to start looking elsewhere!
+      console.log(
+        `I was looking for a span at ${w.time_delta} for row ${i} but there weren't enough`
+      );
       console.log("TODO: keep looking for a spot we can fit this");
       throw new Error("fail");
     }
