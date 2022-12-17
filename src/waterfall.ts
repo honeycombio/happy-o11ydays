@@ -75,24 +75,36 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     ...readImageData("input/ornament.png"),
   ];
 
-  var fit: PossibleFits<T> = "Not enough room";
+  var fitError:
+    | "Not enough room"
+    | "Give up, there's no way this is gonna fit"
+    | null = "Not enough room";
+  var fitResult: FoundASpot<T> | null = null;
   var incrementFromTheLeft = 0;
-  while (fit === "Not enough room") {
-    const fit = findASpot(
+  while (fitError === "Not enough room") {
+    [fitResult, fitError] = findASpot(
       spans,
       waterfallImageDescriptionWithRoot,
       incrementFromTheLeft++
     );
-    if (fit === "Give up, there's no way this is gonna fit") {
+
+    if (fitError === "Give up, there's no way this is gonna fit") {
+      console.log("Unable to fit picture...");
       // we are done putting images in there
       return spans.map((s) => ({ ...s, ...nothingSpecialOnTheWaterfall }));
     }
   }
 
-  const { waterfallImageSpans, availableSpans } = fit;
+  if (fitResult === null) {
+    throw new Error("look typescript. it isn't null");
+  }
+
+  const { waterfallImageSpans, availableSpans } = fitResult;
   // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
 
-  const waterfallImageSpecs3 = determineTreeStructure(waterfallImageSpans);
+  const waterfallImageSpecs3 = determineTreeStructure(
+    waterfallImageSpans
+  ) as Array<T & TraceSpanSpec>; // fuck you typescript, i have spent too much time fighting you
 
   const unusedSpans = availableSpans.map((s) => ({
     ...s,
@@ -187,17 +199,21 @@ type FoundASpot<T extends HasTimeDelta> = {
   availableSpans: T[];
 };
 type PossibleFits<T extends HasTimeDelta> =
-  | FoundASpot<T>
-  | "Not enough room"
-  | "Give up, there's no way this is gonna fit";
+  | [FoundASpot<T>, null]
+  | [null, "Not enough room"]
+  | [null, "Give up, there's no way this is gonna fit"];
+// typescript makes this hard... use go-style return
 function findASpot<T extends HasTimeDelta>(
   spans: T[],
   waterfallImageDescription: WaterfallImageRow[],
   incrementFromTheLeft: number
 ): PossibleFits<T> {
+  console.log(
+    `BEGIN: there are ${spans.length} spans, and increment is ${incrementFromTheLeft}`
+  );
   const fitWithinImage = proportion(spans, incrementFromTheLeft);
   if (fitWithinImage === "Give up, there's no way this is gonna fit") {
-    return "Give up, there's no way this is gonna fit";
+    return [null, "Give up, there's no way this is gonna fit"];
   }
   const { calculateWidth, calculateTimeDelta } = fitWithinImage;
   const waterfallImageSpecs1 = waterfallImageDescription.map((w, i) => ({
@@ -211,7 +227,7 @@ function findASpot<T extends HasTimeDelta>(
   try {
     const waterfallImageSpecs2 = waterfallImageSpecs1.map((w, i) => {
       // mutating
-      const allocatedSpan = availableSpans[w.time_delta].pop();
+      const allocatedSpan = availableSpans[w.time_delta]?.pop();
       if (allocatedSpan === undefined) {
         // time to start looking elsewhere!
         console.log(
@@ -231,12 +247,15 @@ function findASpot<T extends HasTimeDelta>(
       }
       return { ...w, ...allocatedSpan };
     });
-    return {
-      waterfallImageSpans: waterfallImageSpecs2,
-      availableSpans: Object.values(availableSpans).flat(),
-    };
+    return [
+      {
+        waterfallImageSpans: waterfallImageSpecs2 as any, // fuck you typescript
+        availableSpans: Object.values(availableSpans).flat(),
+      },
+      null,
+    ];
   } catch (e) {
-    if (e === "Not enough room") return e;
+    if (e === "Not enough room") return [null, e];
     throw e; // unexpected
   }
 }
