@@ -50,14 +50,16 @@ const nothingSpecialOnTheWaterfall = {
   increment: 1,
 };
 
+("ornament");
+type ImageSource = { filename: string; waterfallImageName: string };
+const IMAGE_SOURCES = Array(30).fill({
+  filename: "input/ornament.png",
+  waterfallImageName: "ornament",
+});
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
-  const [{ imageSpans, rest }, err] = buildOnePicture(
-    spans,
-    "input/ornament.png",
-    "ornament"
-  );
+  const [{ imageSpans, rest }, err] = buildOnePicture(spans, IMAGE_SOURCES[0]);
   if (err) {
     throw err;
   }
@@ -73,8 +75,7 @@ type BuildOnePictureOutcome<T extends HasTimeDelta> = [
 ];
 function buildOnePicture<T extends HasTimeDelta>(
   spans: T[],
-  filename: string,
-  waterfallImageName: string
+  { filename, waterfallImageName }: ImageSource
 ): BuildOnePictureOutcome<T> {
   const waterfallImageDescriptionWithRoot = [
     { start: 0, width: 0 }, // invent an early root span because I want this at the top of the trace
