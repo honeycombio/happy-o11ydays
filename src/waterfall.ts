@@ -11,25 +11,6 @@ export type TraceSpanSpec = {
   popAfter: number;
 };
 
-class IncrementMarker<
-  T extends HasTimeDelta & Omit<TraceSpanSpec, "increment">
-> {
-  // could be a function that returns the function
-  private previous_time_delta: number = -500000; // nonsense
-  private increment: number = 0;
-  public mark: (ss: T) => T & TraceSpanSpec = (ss: T) => {
-    if (ss.time_delta !== this.previous_time_delta) {
-      // reset
-      this.previous_time_delta = ss.time_delta;
-      this.increment = 0;
-    }
-    return {
-      ...ss,
-      increment: this.increment++,
-    };
-  };
-}
-
 function readImageData(filename: string) {
   const pixels = readImage(filename);
 }
