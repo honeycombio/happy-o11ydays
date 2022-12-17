@@ -6,9 +6,11 @@ export type Nanoseconds = number;
 export type HrTime = [SecondsSinceEpoch, Nanoseconds];
 export const Granularity: Seconds = 5;
 
+
 type CountOfSpans = number; // 0 to maxSpansAtOnePoint
+type NegativeIntegerPixelsFromLeft = number;
 export type HeatmapSpanSpec = {
-  time_delta: number;
+  time_delta: NegativeIntegerPixelsFromLeft;
   height: number;
   spans_at_once: CountOfSpans;
 };
