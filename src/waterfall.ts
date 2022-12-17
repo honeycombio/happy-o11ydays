@@ -49,12 +49,33 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
       rest: spans,
     }
   );
+
+  shuffleRoots(result.imageSpans);
   return [
     ...result.rest.map((s) => ({ ...s, ...nothingSpecialOnTheWaterfall })),
     ...result.imageSpans.flat(),
   ];
 }
 
+// https://dev.to/codebubb/how-to-shuffle-an-array-in-javascript-2ikj
+// mutating
+function shuffleArray<T>(array: T[]) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = array[i];
+    array[i] = array[j];
+    array[j] = temp;
+  }
+}
+
+// mutating
+function shuffleRoots<T extends HasTimeDelta>(
+  imagesInWaterfall: Array<Array<T>>
+) {
+  const roots = imagesInWaterfall.map((ii) => ii[0]);
+  shuffleArray(roots);
+  imagesInWaterfall.forEach((imageRows, i) => (imageRows[0] = roots[i]));
+}
 type BuildOnePictureOutcome<T extends HasTimeDelta> = [
   { imageSpans: Array<T & TraceSpanSpec>; rest: T[] },
   "Give up, there's no way this is gonna fit" | null
