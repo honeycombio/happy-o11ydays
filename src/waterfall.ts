@@ -60,6 +60,13 @@ const waterfallImageName = "ornament";
 type StartToTimeDelta = (start: number) => DistanceFromRight;
 type WidthToWaterfallWidth = (width: number) => FractionOfGranularity;
 
+const nothingSpecialOnTheWaterfall = {
+  waterfallWidth: 1,
+  popBefore: 1,
+  popAfter: 0,
+  increment: 1,
+};
+
 export function buildPictureInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
@@ -68,56 +75,29 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     ...readImageData("input/ornament.png"),
   ];
 
-  const incrementFromTheLeft = 1;
-  const { calculateWidth, calculateTimeDelta } = proportion(
-    spans,
-    incrementFromTheLeft
-  );
-  const waterfallImageSpecs1 = waterfallImageDescriptionWithRoot.map(
-    (w, i) => ({
-      waterfallImageName,
-      waterfallRow: i,
-      time_delta: calculateTimeDelta(w.start),
-      waterfallWidth: calculateWidth(w.width),
-      waterfallImageRoot: i === 0,
-    })
-  );
-  const availableSpans = groupByTimeDelta(spans);
-  const waterfallImageSpecs2 = waterfallImageSpecs1.map((w, i) => {
-    // mutating
-    const allocatedSpan = availableSpans[w.time_delta].pop();
-    if (allocatedSpan === undefined) {
-      // time to start looking elsewhere!
-      console.log(
-        `I was looking for a span at ${w.time_delta} for row ${i} but there weren't enough`
-      );
-      console.log(
-        "I needed " +
-          waterfallImageSpecs1.filter((w2) => w2.time_delta === w.time_delta)
-            .length
-      );
-      console.log(
-        "but there were " +
-          spans.filter((s) => s.time_delta === w.time_delta).length
-      );
-      console.log("TODO: keep looking for a spot we can fit this");
-      throw new Error("fail");
+  var fit: PossibleFits<T> = "Not enough room";
+  var incrementFromTheLeft = 0;
+  while (fit === "Not enough room") {
+    const fit = findASpot(
+      spans,
+      waterfallImageDescriptionWithRoot,
+      incrementFromTheLeft++
+    );
+    if (fit === "Give up, there's no way this is gonna fit") {
+      // we are done putting images in there
+      return spans.map((s) => ({ ...s, ...nothingSpecialOnTheWaterfall }));
     }
-    return { ...w, ...allocatedSpan };
-  });
+  }
+
+  const { waterfallImageSpans, availableSpans } = fit;
   // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
 
-  const waterfallImageSpecs3 = determineTreeStructure(waterfallImageSpecs2);
+  const waterfallImageSpecs3 = determineTreeStructure(waterfallImageSpans);
 
-  const unusedSpans = Object.values(availableSpans)
-    .flat()
-    .map((s) => ({
-      ...s,
-      waterfallWidth: 1,
-      popBefore: 1,
-      popAfter: 0,
-      increment: 1,
-    }));
+  const unusedSpans = availableSpans.map((s) => ({
+    ...s,
+    ...nothingSpecialOnTheWaterfall,
+  }));
 
   return [...waterfallImageSpecs3, ...unusedSpans];
 }
@@ -125,16 +105,21 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
 function proportion<T extends HasTimeDelta>(
   spans: T[],
   increment: number
-): {
-  calculateTimeDelta: StartToTimeDelta;
-  calculateWidth: WidthToWaterfallWidth;
-} {
+):
+  | {
+      calculateTimeDelta: StartToTimeDelta;
+      calculateWidth: WidthToWaterfallWidth;
+    }
+  | "Give up, there's no way this is gonna fit" {
   const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
   const maxTimeDelta = Math.max(...spans.map((s) => s.time_delta)); // should be 0
   const totalWaterfallWidth = maxTimeDelta - minTimeDelta;
   const waterfallImageWidth = Math.max(
     ...waterfallImageDescription.map((w) => w.start + w.width)
   );
+  if (minTimeDelta + increment + waterfallImageWidth > maxTimeDelta) {
+    return "Give up, there's no way this is gonna fit";
+  }
   const waterfallImagePixelWidth = Math.floor(
     (totalWaterfallWidth / waterfallImageWidth) * 0.6
   );
@@ -195,4 +180,63 @@ function determineTreeStructure<T extends HasTimeDelta>(specsSoFar: T[]) {
     parentTimeDeltas.length;
 
   return waterfallImageSpecs3;
+}
+
+type FoundASpot<T extends HasTimeDelta> = {
+  waterfallImageSpans: T[];
+  availableSpans: T[];
+};
+type PossibleFits<T extends HasTimeDelta> =
+  | FoundASpot<T>
+  | "Not enough room"
+  | "Give up, there's no way this is gonna fit";
+function findASpot<T extends HasTimeDelta>(
+  spans: T[],
+  waterfallImageDescription: WaterfallImageRow[],
+  incrementFromTheLeft: number
+): PossibleFits<T> {
+  const fitWithinImage = proportion(spans, incrementFromTheLeft);
+  if (fitWithinImage === "Give up, there's no way this is gonna fit") {
+    return "Give up, there's no way this is gonna fit";
+  }
+  const { calculateWidth, calculateTimeDelta } = fitWithinImage;
+  const waterfallImageSpecs1 = waterfallImageDescription.map((w, i) => ({
+    waterfallImageName,
+    waterfallRow: i,
+    time_delta: calculateTimeDelta(w.start),
+    waterfallWidth: calculateWidth(w.width),
+    waterfallImageRoot: i === 0,
+  }));
+  const availableSpans = groupByTimeDelta(spans);
+  try {
+    const waterfallImageSpecs2 = waterfallImageSpecs1.map((w, i) => {
+      // mutating
+      const allocatedSpan = availableSpans[w.time_delta].pop();
+      if (allocatedSpan === undefined) {
+        // time to start looking elsewhere!
+        console.log(
+          `I was looking for a span at ${w.time_delta} for row ${i} but there weren't enough`
+        );
+        console.log(
+          "I needed " +
+            waterfallImageSpecs1.filter((w2) => w2.time_delta === w.time_delta)
+              .length
+        );
+        console.log(
+          "but there were " +
+            spans.filter((s) => s.time_delta === w.time_delta).length
+        );
+        console.log("TODO: keep looking for a spot we can fit this");
+        throw "Not enough room"; // i'm being lazy
+      }
+      return { ...w, ...allocatedSpan };
+    });
+    return {
+      waterfallImageSpans: waterfallImageSpecs2,
+      availableSpans: Object.values(availableSpans).flat(),
+    };
+  } catch (e) {
+    if (e === "Not enough room") return e;
+    throw e; // unexpected
+  }
 }
