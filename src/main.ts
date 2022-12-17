@@ -2,7 +2,7 @@ import { sdk } from "./tracing";
 import { Pixels, readImage } from "./image";
 import { populateAttributes } from "./bubbleUp";
 
-import otel, { Span } from "@opentelemetry/api";
+import otel, { Context, Span } from "@opentelemetry/api";
 import { findLinkToDataset } from "./honeyApi";
 import {
   approximateColorByNumberOfSpans,
@@ -94,24 +94,31 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
     { startTime: placeHorizontallyInBucket(begin, earliestTimeDelta, 0) },
     (rootSpan) => {
       // create all the spans for the picture
-      var parentSpans: Array<[Span, HrTime]> = [];
+      var parentContexts: Array<Context> = [];
       spanSpecs.sort(byTime).forEach((ss) => {
         if (!ss.childOfPrevious) {
-          drainAll(parentSpans);
+          parentContexts.pop();
         }
+        const contextForThisSpan = parentContexts[0] || otel.context.active();
         const startTime = placeHorizontallyInBucket(
           begin,
           ss.time_delta,
           ss.increment
         );
-        const s = tracer.startSpan("la", {
-          startTime,
-          attributes: ss,
-        });
-        const endTime = planEndTime(startTime, ss.waterfallWidth);
-        parentSpans.push([s, endTime]);
+        const s = tracer.startActiveSpan(
+          "la",
+          {
+            startTime,
+            attributes: ss,
+          },
+          contextForThisSpan,
+          (s) => {
+            parentContexts.push(otel.context.active());
+            const endTime = planEndTime(startTime, ss.waterfallWidth);
+            s.end(endTime);
+          }
+        );
       });
-      drainAll(parentSpans);
       traceId = rootSpan.spanContext().traceId;
       rootSpan.end();
       return traceId;
