@@ -34,28 +34,6 @@ const waterfallImageName = "ornament";
 
 type StartToTimeDelta = (start: number) => DistanceFromRight;
 type WidthToWaterfallWidth = (width: number) => FractionOfGranularity;
-function proportion<T extends HasTimeDelta>(
-  spans: T[]
-): {
-  calculateTimeDelta: StartToTimeDelta;
-  calculateWidth: WidthToWaterfallWidth;
-} {
-  const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
-  const maxTimeDelta = Math.max(...spans.map((s) => s.time_delta)); // should be 0
-  const totalWaterfallWidth = maxTimeDelta - minTimeDelta;
-  const waterfallImageWidth = Math.max(
-    ...waterfallImageDescription.map((w) => w.start + w.width)
-  );
-  const waterfallImagePixelWidth = Math.floor(
-    (totalWaterfallWidth / waterfallImageWidth) * 0.6
-  );
-
-  return {
-    calculateTimeDelta: (start: number) =>
-      start * waterfallImagePixelWidth + minTimeDelta,
-    calculateWidth: (width: number) => width * waterfallImagePixelWidth,
-  };
-}
 
 export function buildPictureInWaterfall<T extends HasTimeDelta>(
   spans: T[]
@@ -87,6 +65,7 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     return { ...w, ...allocatedSpan };
   });
   // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
+
   const waterfallImageSpecs3 = determineTreeStructure(waterfallImageSpecs2);
 
   const unusedSpans = Object.values(availableSpans)
@@ -100,6 +79,29 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     }));
 
   return [...waterfallImageSpecs3, ...unusedSpans];
+}
+
+function proportion<T extends HasTimeDelta>(
+  spans: T[]
+): {
+  calculateTimeDelta: StartToTimeDelta;
+  calculateWidth: WidthToWaterfallWidth;
+} {
+  const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
+  const maxTimeDelta = Math.max(...spans.map((s) => s.time_delta)); // should be 0
+  const totalWaterfallWidth = maxTimeDelta - minTimeDelta;
+  const waterfallImageWidth = Math.max(
+    ...waterfallImageDescription.map((w) => w.start + w.width)
+  );
+  const waterfallImagePixelWidth = Math.floor(
+    (totalWaterfallWidth / waterfallImageWidth) * 0.6
+  );
+
+  return {
+    calculateTimeDelta: (start: number) =>
+      start * waterfallImagePixelWidth + minTimeDelta,
+    calculateWidth: (width: number) => width * waterfallImagePixelWidth,
+  };
 }
 
 function groupByTimeDelta<T extends HasTimeDelta>(
