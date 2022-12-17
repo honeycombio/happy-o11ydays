@@ -185,6 +185,7 @@ function readImageData(filename: string): WaterfallImageRow[] {
       {
         start,
         width,
+        waterfallColor: pixels.at(start, y).asFlatJson(),
       },
       ...findSparkles(pixels, y),
     ];
@@ -197,7 +198,12 @@ function findSparkles(pixels: Pixels, y: number): WaterfallImageRow[] {
   return range(0, pixels.width)
     .map((x) => pixels.at(x, y))
     .filter((p) => p.color.red > 0 && p.color.darkness() > 0)
-    .map((p) => ({ start: p.location.x, width: 0, sparkle: true }));
+    .map((p) => ({
+      start: p.location.x,
+      width: 0,
+      sparkle: true,
+      waterfallColor: p.asFlatJson(),
+    }));
 }
 
 function range(startInclusive: number, endExclusive: number) {
@@ -292,11 +298,14 @@ function findASpot<T extends HasTimeDelta>(
   }
   const { calculateWidth, calculateTimeDelta } = fitWithinImage;
   const waterfallImageSpecs1 = waterfallImageDescription.map((w, i) => ({
-    waterfallRow: i,
     time_delta: calculateTimeDelta(w.start),
     waterfallWidth: calculateWidth(w.width),
-    waterfallImageRoot: i === 0,
     spanEvent: w.sparkle || false,
+    waterfallSpec: JSON.stringify({
+      row: i,
+      imageRoot: i === 0,
+      ...w,
+    }),
   }));
   const availableSpans = groupByTimeDelta(spans);
   try {
