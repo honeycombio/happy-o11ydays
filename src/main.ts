@@ -95,34 +95,45 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
     (rootSpan) => {
       // create all the spans for the picture
       var parentContexts: Array<Context> = [];
-      spanSpecs.forEach((ss) => {
-        for (var i = 0; i < ss.popBefore; i++) {
-          parentContexts.shift();
-        }
-        const contextForThisSpan = parentContexts[0] || otel.context.active();
+      var openSpan: Span = rootSpan;
+      var openSpanEndTime: HrTime | undefined = undefined;
+      spanSpecs.forEach((ss, i) => {
         const startTime = placeHorizontallyInBucket(
           begin,
           ss.time_delta,
           ss.increment
         );
-        const s = tracer.startActiveSpan(
-          "la",
-          {
-            startTime,
-            attributes: ss,
-          },
-          contextForThisSpan,
-          (s) => {
-            parentContexts.unshift(otel.context.active());
-            const endTime = planEndTime(startTime, ss.waterfallWidth);
-            for (var i = 0; i < ss.popAfter; i++) {
-              parentContexts.shift();
-            }
-            s.end(endTime);
+        if (ss.spanEvent) {
+          // something completely different
+          openSpan.addEvent("sparkle", ss, startTime);
+        } else {
+          if (i > 0) {
+            openSpan.end(openSpanEndTime);
           }
-        );
+          for (var i = 0; i < ss.popBefore; i++) {
+            parentContexts.shift();
+          }
+          const contextForThisSpan = parentContexts[0] || otel.context.active();
+          tracer.startActiveSpan(
+            "la",
+            {
+              startTime,
+              attributes: ss,
+            },
+            contextForThisSpan,
+            (s) => {
+              parentContexts.unshift(otel.context.active());
+              for (var i = 0; i < ss.popAfter; i++) {
+                parentContexts.shift();
+              }
+              openSpan = s;
+              openSpanEndTime = planEndTime(startTime, ss.waterfallWidth);
+            }
+          );
+        }
       });
       traceId = rootSpan.spanContext().traceId;
+      openSpan.end(openSpanEndTime);
       rootSpan.end();
       return traceId;
     }

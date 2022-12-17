@@ -7,6 +7,7 @@ export type TraceSpanSpec = {
   waterfallWidth: FractionOfGranularity;
   popBefore: number;
   popAfter: number;
+  spanEvent: boolean;
 };
 
 type WaterfallImageRow = { start: number; width: number };
@@ -19,6 +20,7 @@ const nothingSpecialOnTheWaterfall = {
   popBefore: 1,
   popAfter: 0,
   increment: 1,
+  spanEvent: true,
 };
 
 type ImageSource = { filename: string; waterfallImageName: string };
@@ -252,6 +254,7 @@ function findASpot<T extends HasTimeDelta>(
     time_delta: calculateTimeDelta(w.start),
     waterfallWidth: calculateWidth(w.width),
     waterfallImageRoot: i === 0,
+    spanEvent: false,
   }));
   const availableSpans = groupByTimeDelta(spans);
   try {
