@@ -40,18 +40,18 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
         return "stop";
       }
       return {
-        imageSpans: [...resultsSoFar.imageSpans, ...newResult.imageSpans],
+        imageSpans: [...resultsSoFar.imageSpans, newResult.imageSpans],
         rest: newResult.rest,
       };
     },
     {
-      imageSpans: [] as Array<T & TraceSpanSpec>,
+      imageSpans: [] as Array<Array<T & TraceSpanSpec>>,
       rest: spans,
     }
   );
   return [
     ...result.rest.map((s) => ({ ...s, ...nothingSpecialOnTheWaterfall })),
-    ...result.imageSpans,
+    ...result.imageSpans.flat(),
   ];
 }
 
