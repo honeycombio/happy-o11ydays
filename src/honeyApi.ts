@@ -56,7 +56,9 @@ export function fetchConfiguration() {
   };
 }
 
-export async function findLinkToDataset(): Promise<string | undefined> {
+export async function findLinkToDataset(
+  traceId: string
+): Promise<string | undefined> {
   const { dataset, apiKey } = fetchConfiguration();
   if (!apiKey) {
     return undefined;
@@ -69,5 +71,5 @@ export async function findLinkToDataset(): Promise<string | undefined> {
   }
   const datasetPortion = dataset ? `/datasets/${dataset}` : "";
 
-  return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}`;
+  return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}/trace?trace_id=${traceId}`;
 }

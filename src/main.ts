@@ -14,7 +14,7 @@ import {
 } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
-import { addTraceArtSpecs, buildPictureInWaterfall, TraceSpanSpec } from "./waterfall";
+import { buildPictureInWaterfall, TraceSpanSpec } from "./waterfall";
 
 const greeting = ` _________________ 
 < Happy O11ydays! >
@@ -41,7 +41,7 @@ async function main(imageFile: string) {
   const traceId = sendSpans(spanSpecs);
   console.log("We did it! The trace ID is: " + traceId);
 
-  const link = await findLinkToDataset();
+  const link = await findLinkToDataset(traceId);
   console.log("Run a new query for HEATMAP(height) in this dataset: " + link);
 
   sdk.shutdown();
@@ -51,7 +51,7 @@ async function main(imageFile: string) {
 
 type SpanSpec = HeatmapSpanSpec &
   TraceSpanSpec &
-  Record<string, number | string>;
+  Record<string, number | string | boolean>;
 
 function planSpans(pixels: Pixels): SpanSpec[] {
   const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);

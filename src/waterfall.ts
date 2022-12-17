@@ -7,9 +7,12 @@ type HasTimeDelta = { time_delta: DistanceFromRight };
 export type TraceSpanSpec = {
   increment: number;
   duration: FractionOfGranularity;
+  childOfPrevious: boolean;
 };
 
-class IncrementMarker<T extends HasTimeDelta> {
+class IncrementMarker<
+  T extends HasTimeDelta & Omit<TraceSpanSpec, "increment">
+> {
   // could be a function that returns the function
   private previous_time_delta: number = -500000; // nonsense
   private increment: number = 0;
@@ -22,24 +25,8 @@ class IncrementMarker<T extends HasTimeDelta> {
     return {
       ...ss,
       increment: this.increment++,
-      duration: 1 / this.increment,
     };
   };
-}
-export function addTraceArtSpecs<T extends HasTimeDelta>(
-  graphSpanSpecs: T[]
-): Array<T & TraceSpanSpec> {
-  // inner class so that it has access to T
-
-  function byTimeDelta(a: { time_delta: number }, b: { time_delta: number }) {
-    return b.time_delta - a.time_delta;
-  }
-
-  const orderedSpecs = graphSpanSpecs
-    .sort(byTimeDelta)
-    .map(new IncrementMarker<T>().mark);
-
-  return orderedSpecs;
 }
 
 function readImageData(filename: string) {
@@ -61,12 +48,14 @@ const waterfallImageDescription = [
   { start: 2, width: 5 },
   { start: 3, width: 3 },
 ];
+const waterfallImageName = "ornament";
 
 export function buildPictureInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
   const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
-  const waterfallImageSpecs1 = waterfallImageDescription.map((w) => ({
+  const waterfallImageSpecs1 = waterfallImageDescription.map((w, i) => ({
+    bonusInfo: { waterfallImageName, waterfallRow: i },
     time_delta: w.start + minTimeDelta,
     waterfallWidth: w.width,
   }));
@@ -97,16 +86,22 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     })()
   );
 
-  const waterfallImageSpans = waterfallImageSpecs3.map((w) => ({
-    ...w.allocatedSpan,
-    duration: w.waterfallWidth,
-    childOfPrevious: w.childOfPrevious,
-  }));
+  type SpecsWithoutIncrement = T & Omit<TraceSpanSpec, "increment">;
+  const waterfallImageSpans: SpecsWithoutIncrement[] = waterfallImageSpecs3.map(
+    (w) => ({
+      ...w.allocatedSpan,
+      duration: w.waterfallWidth,
+      childOfPrevious: w.childOfPrevious,
+      ...w.bonusInfo,
+    })
+  );
 
   const allSpans: Array<T & TraceSpanSpec> = [
     ...waterfallImageSpans,
-    ...Object.values(availableSpans).flat().map(s => ({...s, duration: 1})),
-  ].map(new IncrementMarker<T>().mark);
+    ...Object.values(availableSpans)
+      .flat()
+      .map((s) => ({ ...s, duration: 1, childOfPrevious: false })),
+  ].map(new IncrementMarker<SpecsWithoutIncrement>().mark);
 
   return allSpans;
 }
