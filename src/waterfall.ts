@@ -299,17 +299,14 @@ function iteratron<T, R>(
   fn: (prev: R, e: T, i: number) => R | "stop",
   init: R
 ): R {
-  var stopYet = false;
-  var i = 0;
   var output = init;
-  while (!stopYet) {
+  for (var i = 0; i < arr.length; i++) {
     const result = fn(output, arr[i], i);
     if (result === "stop") {
-      stopYet = true;
+      return output;
     } else {
       output = result;
     }
-    i++;
   }
   return output;
 }
