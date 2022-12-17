@@ -63,12 +63,16 @@ type WidthToWaterfallWidth = (width: number) => FractionOfGranularity;
 export function buildPictureInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
-  const { calculateWidth, calculateTimeDelta } = proportion(spans);
-
   const waterfallImageDescriptionWithRoot = [
     { start: 0, width: 0 }, // invent an early root span because I want this at the top of the trace
     ...readImageData("input/ornament.png"),
   ];
+
+  const incrementFromTheLeft = 1;
+  const { calculateWidth, calculateTimeDelta } = proportion(
+    spans,
+    incrementFromTheLeft
+  );
   const waterfallImageSpecs1 = waterfallImageDescriptionWithRoot.map(
     (w, i) => ({
       waterfallImageName,
@@ -86,6 +90,15 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
       // time to start looking elsewhere!
       console.log(
         `I was looking for a span at ${w.time_delta} for row ${i} but there weren't enough`
+      );
+      console.log(
+        "I needed " +
+          waterfallImageSpecs1.filter((w2) => w2.time_delta === w.time_delta)
+            .length
+      );
+      console.log(
+        "but there were " +
+          spans.filter((s) => s.time_delta === w.time_delta).length
       );
       console.log("TODO: keep looking for a spot we can fit this");
       throw new Error("fail");
@@ -110,7 +123,8 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
 }
 
 function proportion<T extends HasTimeDelta>(
-  spans: T[]
+  spans: T[],
+  increment: number
 ): {
   calculateTimeDelta: StartToTimeDelta;
   calculateWidth: WidthToWaterfallWidth;
@@ -127,7 +141,7 @@ function proportion<T extends HasTimeDelta>(
 
   return {
     calculateTimeDelta: (start: number) =>
-      start * waterfallImagePixelWidth + minTimeDelta,
+      start * waterfallImagePixelWidth + minTimeDelta + increment,
     calculateWidth: (width: number) => width * waterfallImagePixelWidth,
   };
 }
