@@ -63,7 +63,7 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
   const { calculateWidth, calculateTimeDelta } = proportion(spans);
 
   const waterfallImageDescriptionWithRoot = [
-    { start: 0, width: 0 },
+    { start: 0, width: 0 }, // invent an early root span because I want this at the top of the trace
     ...waterfallImageDescription,
   ];
   const waterfallImageSpecs1 = waterfallImageDescriptionWithRoot.map(
@@ -84,18 +84,10 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
       console.log("TODO: keep looking for a spot we can fit this");
       throw new Error("fail");
     }
-    return { ...w, allocatedSpan };
+    return { ...w, ...allocatedSpan };
   });
   // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
   const waterfallImageSpecs3 = determineTreeStructure(waterfallImageSpecs2);
-
-  const waterfallImageSpans = waterfallImageSpecs3.map((w) => {
-    const { allocatedSpan, ...rest } = w;
-    return {
-      ...allocatedSpan,
-      ...rest,
-    };
-  });
 
   const unusedSpans = Object.values(availableSpans)
     .flat()
@@ -107,7 +99,7 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
       increment: 1,
     }));
 
-  return [...waterfallImageSpans, ...unusedSpans];
+  return [...waterfallImageSpecs3, ...unusedSpans];
 }
 
 function groupByTimeDelta<T extends HasTimeDelta>(
