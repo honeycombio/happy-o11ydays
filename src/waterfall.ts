@@ -1,4 +1,4 @@
-import { readImage } from "./image";
+import { Pixels, readImage } from "./image";
 
 type HasTimeDelta = { time_delta: DistanceFromRight };
 export type FractionOfGranularity = number;
@@ -10,7 +10,7 @@ export type TraceSpanSpec = {
   spanEvent: boolean;
 };
 
-type WaterfallImageRow = { start: number; width: number };
+type WaterfallImageRow = { start: number; width: number; sparkle?: boolean };
 type DistanceFromRight = number; // nonpositive integer
 type StartToTimeDelta = (start: number) => DistanceFromRight;
 type WidthToWaterfallWidth = (width: number) => FractionOfGranularity;
@@ -146,22 +146,32 @@ function readImageData(filename: string): WaterfallImageRow[] {
 
   const rows = range(0, pixels.height).map((y) => {
     const start = range(0, pixels.width).find(
-      (x) => pixels.at(x, y).color.darkness() > 0
+      (x) => pixels.at(x, y).color.blue > 0
     );
     if (start === undefined) {
-      return undefined;
+      return undefined; // filter these out later
     }
     const possibleWidth = range(start, pixels.width).findIndex(
-      (x) => pixels.at(x, y).color.darkness() === 0
+      (x) => pixels.at(x, y).color.blue === 0
     );
     const width = possibleWidth === -1 ? pixels.width - start : possibleWidth;
-    return {
-      start,
-      width,
-    };
+    return [
+      {
+        start,
+        width,
+      },
+      ...findSparkles(pixels, y),
+    ];
   });
 
-  return rows.filter((x) => x !== undefined) as WaterfallImageRow[]; // typescript, you're wrong
+  return rows.flat().filter((x) => x !== undefined) as WaterfallImageRow[]; // typescript, you're wrong
+}
+
+function findSparkles(pixels: Pixels, y: number): WaterfallImageRow[] {
+  return range(0, pixels.width)
+    .map((x) => pixels.at(x, y))
+    .filter((p) => p.color.red > 0)
+    .map((p) => ({ start: p.location.x, width: 0, sparkle: true }));
 }
 
 function range(startInclusive: number, endExclusive: number) {
@@ -254,7 +264,7 @@ function findASpot<T extends HasTimeDelta>(
     time_delta: calculateTimeDelta(w.start),
     waterfallWidth: calculateWidth(w.width),
     waterfallImageRoot: i === 0,
-    spanEvent: false,
+    spanEvent: w.sparkle || false,
   }));
   const availableSpans = groupByTimeDelta(spans);
   try {
