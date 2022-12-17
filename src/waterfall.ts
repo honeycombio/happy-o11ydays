@@ -52,7 +52,13 @@ const nothingSpecialOnTheWaterfall = {
   increment: 1,
 };
 
-export function buildPictureInWaterfall<T extends HasTimeDelta>(
+export function buildPicturesInWaterfall<T extends HasTimeDelta>(
+  spans: T[]
+): Array<T & TraceSpanSpec> {
+  return buildOnePicture(spans);
+}
+
+function buildOnePicture<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
   const waterfallImageDescriptionWithRoot = [
@@ -73,7 +79,7 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     if (fitError === "Give up, there's no way this is gonna fit") {
       console.log("Unable to fit picture...");
       // we are done putting images in there
-      return spans.map((s) => ({ ...s, ...nothingSpecialOnTheWaterfall }));
+      throw "Give up, there's no way this is gonna fit";
     }
   }
 

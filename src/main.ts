@@ -15,7 +15,7 @@ import {
 } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
-import { buildPictureInWaterfall, TraceSpanSpec } from "./waterfall";
+import { buildPicturesInWaterfall, TraceSpanSpec } from "./waterfall";
 
 const greeting = ` _________________ 
 < Happy O11ydays! >
@@ -77,7 +77,7 @@ function planSpans(pixels: Pixels): SpanSpec[] {
     .flat();
 
   const graphSpanSpecs = addStackedGraphAttributes(heatmapSpanSpecs);
-  const spanSpecs = buildPictureInWaterfall(graphSpanSpecs);
+  const spanSpecs = buildPicturesInWaterfall(graphSpanSpecs);
 
   return spanSpecs;
 }
