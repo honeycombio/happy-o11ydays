@@ -32,9 +32,14 @@ const waterfallImageDescription = [
 ];
 const waterfallImageName = "ornament";
 
-export function buildPictureInWaterfall<T extends HasTimeDelta>(
+type StartToTimeDelta = (start: number) => DistanceFromRight;
+type WidthToWaterfallWidth = (width: number) => FractionOfGranularity;
+function proportion<T extends HasTimeDelta>(
   spans: T[]
-): Array<T & TraceSpanSpec> {
+): {
+  calculateTimeDelta: StartToTimeDelta;
+  calculateWidth: WidthToWaterfallWidth;
+} {
   const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
   const maxTimeDelta = Math.max(...spans.map((s) => s.time_delta)); // should be 0
   const totalWaterfallWidth = maxTimeDelta - minTimeDelta;
@@ -44,6 +49,19 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
   const waterfallImagePixelWidth = Math.floor(
     (totalWaterfallWidth / waterfallImageWidth) * 0.6
   );
+
+  return {
+    calculateTimeDelta: (start: number) =>
+      start * waterfallImagePixelWidth + minTimeDelta,
+    calculateWidth: (width: number) => width * waterfallImagePixelWidth,
+  };
+}
+
+export function buildPictureInWaterfall<T extends HasTimeDelta>(
+  spans: T[]
+): Array<T & TraceSpanSpec> {
+  const { calculateWidth, calculateTimeDelta } = proportion(spans);
+
   const waterfallImageDescriptionWithRoot = [
     { start: 0, width: 0 },
     ...waterfallImageDescription,
@@ -52,8 +70,8 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     (w, i) => ({
       waterfallImageName,
       waterfallRow: i,
-      time_delta: w.start * waterfallImagePixelWidth + minTimeDelta,
-      waterfallWidth: w.width * waterfallImagePixelWidth,
+      time_delta: calculateTimeDelta(w.start),
+      waterfallWidth: calculateWidth(w.width),
       waterfallImageRoot: i === 0,
     })
   );
