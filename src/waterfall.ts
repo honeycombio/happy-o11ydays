@@ -40,8 +40,6 @@ function range(startInclusive: number, endExclusive: number) {
   return [...Array(endExclusive).keys()].map((x) => x + startInclusive);
 }
 
-const waterfallImageName = "ornament";
-
 type StartToTimeDelta = (start: number) => DistanceFromRight;
 type WidthToWaterfallWidth = (width: number) => FractionOfGranularity;
 
@@ -55,15 +53,17 @@ const nothingSpecialOnTheWaterfall = {
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
-  return buildOnePicture(spans);
+  return buildOnePicture(spans, "input/ornament.png", "ornament");
 }
 
 function buildOnePicture<T extends HasTimeDelta>(
-  spans: T[]
+  spans: T[],
+  filename: string,
+  imageName: string
 ): Array<T & TraceSpanSpec> {
   const waterfallImageDescriptionWithRoot = [
     { start: 0, width: 0 }, // invent an early root span because I want this at the top of the trace
-    ...readImageData("input/ornament.png"),
+    ...readImageData(filename),
   ];
 
   var fitError: FoundASpotError = "Not enough room";
