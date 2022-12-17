@@ -147,9 +147,15 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
 
   const allSpans: Array<T & TraceSpanSpec> = [
     ...waterfallImageSpans,
-    // ...Object.values(availableSpans)
-    //   .flat()
-    //   .map((s) => ({ ...s, waterfallWidth: 1, popBefore: 1, popAfter: 0 })),
+    ...Object.values(availableSpans)
+      .flat()
+      .map((s) => ({
+        ...s,
+        waterfallWidth: 1,
+        popBefore: 1,
+        popAfter: 0,
+        increment: 1,
+      })),
   ];
 
   return allSpans;
