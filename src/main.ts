@@ -95,9 +95,9 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
     (rootSpan) => {
       // create all the spans for the picture
       var parentContexts: Array<Context> = [];
-      spanSpecs.sort(byTime).forEach((ss) => {
-        if (!ss.childOfPrevious) {
-          parentContexts.pop();
+      spanSpecs.forEach((ss) => {
+        for (var i = 0; i < ss.popBefore; i++) {
+          parentContexts.shift();
         }
         const contextForThisSpan = parentContexts[0] || otel.context.active();
         const startTime = placeHorizontallyInBucket(
@@ -113,8 +113,11 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
           },
           contextForThisSpan,
           (s) => {
-            parentContexts.push(otel.context.active());
+            parentContexts.unshift(otel.context.active());
             const endTime = planEndTime(startTime, ss.waterfallWidth);
+            for (var i = 0; i < ss.popAfter; i++) {
+              parentContexts.shift();
+            }
             s.end(endTime);
           }
         );

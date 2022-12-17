@@ -7,7 +7,8 @@ type HasTimeDelta = { time_delta: DistanceFromRight };
 export type TraceSpanSpec = {
   increment: number;
   waterfallWidth: FractionOfGranularity;
-  childOfPrevious: boolean;
+  popBefore: number;
+  popAfter: number;
 };
 
 class IncrementMarker<
@@ -62,12 +63,19 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
   const waterfallImagePixelWidth = Math.floor(
     totalWaterfallWidth / waterfallImageWidth
   );
-  const waterfallImageSpecs1 = waterfallImageDescription.map((w, i) => ({
-    waterfallImageName,
-    waterfallRow: i,
-    time_delta: w.start * waterfallImagePixelWidth + minTimeDelta,
-    waterfallWidth: w.width * waterfallImagePixelWidth,
-  }));
+  const waterfallImageDescriptionWithRoot = [
+    { start: 0, width: 0 },
+    ...waterfallImageDescription,
+  ];
+  const waterfallImageSpecs1 = waterfallImageDescriptionWithRoot.map(
+    (w, i) => ({
+      waterfallImageName,
+      waterfallRow: i,
+      time_delta: w.start * waterfallImagePixelWidth + minTimeDelta,
+      waterfallWidth: w.width * waterfallImagePixelWidth,
+      waterfallImageRoot: i === 0,
+    })
+  );
   const availableSpans = groupByTimeDelta(spans);
   const waterfallImageSpecs2 = waterfallImageSpecs1.map((w) => {
     // mutating
@@ -80,20 +88,41 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
     return { ...w, allocatedSpan };
   });
   // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
-  const waterfallImageSpecs3 = waterfallImageSpecs2.map(
-    (function () {
-      var previousTimeDelta: DistanceFromRight | undefined = undefined;
-      return (w) => {
-        const thisOneStartsBeforeTheOneOnTopOfIt =
-          previousTimeDelta !== undefined && w.time_delta < previousTimeDelta;
-        previousTimeDelta = w.time_delta;
-        return {
-          ...w,
-          childOfPrevious: thisOneStartsBeforeTheOneOnTopOfIt,
-        };
-      };
-    })()
-  );
+  var parentTimeDeltas: DistanceFromRight[] = [];
+  const waterfallImageSpecs3 = waterfallImageSpecs2.map((w) => {
+    // if the one above me is to the right, don't pop any.
+    var popBefore: DistanceFromRight;
+    if (w.waterfallImageRoot) {
+      popBefore = 1; // this is the default. Sibling of whatever is above.
+    } else {
+      // clean this up later
+      const theRowAboveMe = parentTimeDeltas[0];
+      if (theRowAboveMe === undefined) {
+        throw new Error("wtf");
+      }
+      if (theRowAboveMe > w.time_delta) {
+        // I must be its child, or I can't start before it does and also appear below it
+        popBefore = 0;
+      } else {
+        // I can be a sibling, because I start later or at the same time.
+        // but! I might be able to pop again
+        popBefore = 0;
+        while (parentTimeDeltas[0] <= w.time_delta) {
+          popBefore++;
+          parentTimeDeltas.shift();
+        }
+      }
+    }
+    parentTimeDeltas.unshift(w.time_delta);
+    return {
+      ...w,
+      popBefore,
+      popAfter: 0,
+    };
+  });
+  // any remaining parents, we need to pop them after for cleanup.
+  waterfallImageSpecs3[waterfallImageSpecs3.length - 1].popAfter =
+    parentTimeDeltas.length;
 
   type SpecsWithoutIncrement = T & Omit<TraceSpanSpec, "increment">;
   const waterfallImageSpans: SpecsWithoutIncrement[] = waterfallImageSpecs3.map(
@@ -108,9 +137,9 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
 
   const allSpans: Array<T & TraceSpanSpec> = [
     ...waterfallImageSpans,
-    ...Object.values(availableSpans)
-      .flat()
-      .map((s) => ({ ...s, waterfallWidth: 1, childOfPrevious: false })),
+    // ...Object.values(availableSpans)
+    //   .flat()
+    //   .map((s) => ({ ...s, waterfallWidth: 1, popBefore: 1, popAfter: 0 })),
   ].map(new IncrementMarker<SpecsWithoutIncrement>().mark);
 
   return allSpans;
