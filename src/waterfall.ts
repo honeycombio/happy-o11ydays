@@ -6,7 +6,7 @@ type DistanceFromRight = number; // nonpositive integer
 type HasTimeDelta = { time_delta: DistanceFromRight };
 export type TraceSpanSpec = {
   increment: number;
-  duration: FractionOfGranularity;
+  waterfallWidth: FractionOfGranularity;
   childOfPrevious: boolean;
 };
 
@@ -55,7 +55,8 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
 ): Array<T & TraceSpanSpec> {
   const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
   const waterfallImageSpecs1 = waterfallImageDescription.map((w, i) => ({
-    bonusInfo: { waterfallImageName, waterfallRow: i },
+    waterfallImageName,
+    waterfallRow: i,
     time_delta: w.start + minTimeDelta,
     waterfallWidth: w.width,
   }));
@@ -88,19 +89,20 @@ export function buildPictureInWaterfall<T extends HasTimeDelta>(
 
   type SpecsWithoutIncrement = T & Omit<TraceSpanSpec, "increment">;
   const waterfallImageSpans: SpecsWithoutIncrement[] = waterfallImageSpecs3.map(
-    (w) => ({
-      ...w.allocatedSpan,
-      duration: w.waterfallWidth,
-      childOfPrevious: w.childOfPrevious,
-      ...w.bonusInfo,
-    })
+    (w) => {
+      const { allocatedSpan, ...rest } = w;
+      return {
+        ...allocatedSpan,
+        ...rest,
+      };
+    }
   );
 
   const allSpans: Array<T & TraceSpanSpec> = [
     ...waterfallImageSpans,
     ...Object.values(availableSpans)
       .flat()
-      .map((s) => ({ ...s, duration: 1, childOfPrevious: false })),
+      .map((s) => ({ ...s, waterfallWidth: 1, childOfPrevious: false })),
   ].map(new IncrementMarker<SpecsWithoutIncrement>().mark);
 
   return allSpans;

@@ -101,7 +101,7 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
           startTime,
           attributes: ss,
         });
-        const endTime = planEndTime(startTime, ss.duration);
+        const endTime = planEndTime(startTime, ss.waterfallWidth);
         s.end(endTime);
       });
       traceId = rootSpan.spanContext().traceId;
