@@ -2,7 +2,7 @@ import { sdk } from "./tracing";
 import { Pixels, readImage } from "./image";
 import { populateAttributes } from "./bubbleUp";
 
-import otel from "@opentelemetry/api";
+import otel, { Span } from "@opentelemetry/api";
 import { findLinkToDataset } from "./honeyApi";
 import {
   approximateColorByNumberOfSpans,
@@ -11,6 +11,7 @@ import {
   SecondsSinceEpoch,
   HeatmapSpanSpec,
   planEndTime,
+  HrTime,
 } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
@@ -91,7 +92,13 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
     "Deck the halls with boughs of holly",
     (rootSpan) => {
       // create all the spans for the picture
+      var parentSpans: Array<[Span, HrTime]> = [];
       spanSpecs.sort(byTime).forEach((ss) => {
+        const [parent, parentEndTime] = parentSpans.pop() || [
+          undefined,
+          undefined,
+        ]; // the first time it'll be empty
+        parent?.end(parentEndTime);
         const startTime = placeHorizontallyInBucket(
           begin,
           ss.time_delta,
@@ -102,8 +109,9 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
           attributes: ss,
         });
         const endTime = planEndTime(startTime, ss.waterfallWidth);
-        s.end(endTime);
+        parentSpans.push([s, endTime]);
       });
+      parentSpans.forEach(([s, endTime]) => s.end(endTime));
       traceId = rootSpan.spanContext().traceId;
       rootSpan.end();
       return traceId;
