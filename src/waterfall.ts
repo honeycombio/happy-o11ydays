@@ -89,35 +89,37 @@ function buildOnePicture<T extends HasTimeDelta>(
     ...readImageData(filename),
   ];
 
-  var fitError: "Not enough room" | null = "Not enough room";
-  var fitResult: FoundASpot<T> | null = null;
-  var incrementFromTheLeft = 0;
   const maxIncrement = maxIncrementThatMightStillFit(
     spans,
     waterfallImageDescriptionWithRoot
   );
-  while (fitError === "Not enough room") {
-    [fitResult, fitError] = findASpot(
-      spans,
-      waterfallImageDescriptionWithRoot,
-      incrementFromTheLeft++
-    );
-
-    if (incrementFromTheLeft >= maxIncrement) {
-      console.log("Unable to fit picture...");
-      // we are done putting images in there
-      return [
-        { imageSpans: [], rest: spans },
-        "Give up, there's no way this is gonna fit",
-      ];
+  const possibleIncrements = range(0, maxIncrement + 1);
+  shuffleArray(possibleIncrements);
+  const finalFitResult: "fail" | FoundASpot<T> = findResult(
+    possibleIncrements,
+    (incrementFromTheLeft) => {
+      const [fitResult, fitError] = findASpot(
+        spans,
+        waterfallImageDescriptionWithRoot,
+        incrementFromTheLeft++
+      );
+      if (fitError) {
+        return "fail";
+      }
+      return fitResult;
     }
+  );
+
+  if (finalFitResult === "fail") {
+    console.log("Unable to fit picture...");
+    // we are done putting images in there
+    return [
+      { imageSpans: [], rest: spans },
+      "Give up, there's no way this is gonna fit",
+    ];
   }
 
-  if (fitResult === null) {
-    throw new Error("look typescript. it isn't null");
-  }
-
-  const { waterfallImageSpans, availableSpans } = fitResult;
+  const { waterfallImageSpans, availableSpans } = finalFitResult;
   // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
 
   const waterfallImageSpecs3 = determineTreeStructure(
@@ -386,4 +388,17 @@ function mapUntilFail<T, R>(
     }
   }
   return output;
+}
+
+function findResult<T, R>(
+  arr: T[],
+  fn: (e: T, i: number) => R | "fail"
+): R | "fail" {
+  for (var i = 0; i < arr.length; i++) {
+    const result = fn(arr[i], i);
+    if (result !== "fail") {
+      return result;
+    }
+  }
+  return "fail";
 }
