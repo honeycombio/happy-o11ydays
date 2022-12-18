@@ -1,6 +1,7 @@
 import { sdk } from "./tracing";
 import { Pixels, readImage } from "./image";
 import { populateAttributes } from "./bubbleUp";
+import { SpanSong } from "./song";
 
 import otel, { Context, Span } from "@opentelemetry/api";
 import { findLinkToDataset } from "./honeyApi";
@@ -86,6 +87,7 @@ type TraceID = string;
 const tracer = otel.trace.getTracer("viz-art");
 function sendSpans(spanSpecs: SpanSpec[]): TraceID {
   const begin: SecondsSinceEpoch = Math.ceil(Date.now() / 1000);
+  const song = new SpanSong("input/song.txt");
   var traceId: string;
   const earliestTimeDelta = Math.min(...spanSpecs.map((s) => s.time_delta));
   // the root span has no height, so it doesn't appear in the heatmap
@@ -113,14 +115,13 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
           for (var i = 0; i < ss.popBefore; i++) {
             parentContexts.shift();
           }
-          const contextForThisSpan = parentContexts[0] || otel.context.active();
           tracer.startActiveSpan(
-            "la",
+            song.nameThisSpan(),
             {
               startTime,
               attributes: ss,
             },
-            contextForThisSpan,
+            parentContexts[0] || otel.context.active(),
             (s) => {
               parentContexts.unshift(otel.context.active());
               for (var i = 0; i < ss.popAfter; i++) {

@@ -28,6 +28,13 @@ const nothingSpecialOnTheWaterfall = {
   spanEvent: true,
 };
 
+/**
+ * The pictures here are .pngs with characteristics:
+ * each row has one contiguous line of pixels representing the span. It gets a start and a width.
+ * each row can also have sparkles, which turn into span events.
+ * Represent the span with a color containing blue, but no red.
+ * Represent a sparkle with any amount of red.
+ */
 type ImageSource = { filename: string; waterfallImageName: string };
 const IMAGE_SOURCES = [
   Array(5).fill({
@@ -47,6 +54,7 @@ const IMAGE_SOURCES = [
     waterfallImageName: "ornament",
   }),
 ].flat();
+
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
@@ -69,7 +77,7 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
     }
   );
 
-  shuffleRoots(result.imageSpans);
+  shuffleRoots(result.imageSpans); // mutates
   return [
     ...result.rest.map((s) => ({ ...s, ...nothingSpecialOnTheWaterfall })),
     ...result.imageSpans.flat(),
