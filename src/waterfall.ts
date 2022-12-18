@@ -92,7 +92,10 @@ function buildOnePicture<T extends HasTimeDelta>(
   var fitError: FoundASpotError = "Not enough room";
   var fitResult: FoundASpot<T> | null = null;
   var incrementFromTheLeft = 0;
-  const maxIncrement = maxIncrementThatMightStillFit(spans, waterfallImageDescriptionWithRoot)
+  const maxIncrement = maxIncrementThatMightStillFit(
+    spans,
+    waterfallImageDescriptionWithRoot
+  );
   while (fitError === "Not enough room") {
     [fitResult, fitError] = findASpot(
       spans,
@@ -152,21 +155,19 @@ function proportion<T extends HasTimeDelta>(
   spans: T[],
   waterfallImageDescription: WaterfallImageRow[],
   increment: number
-):
-  | {
-      calculateTimeDelta: StartToTimeDelta;
-      calculateWidth: WidthToWaterfallWidth;
-    }
-  | "Give up, there's no way this is gonna fit" {
+): {
+  calculateTimeDelta: StartToTimeDelta;
+  calculateWidth: WidthToWaterfallWidth;
+} {
   const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
   const maxTimeDelta = Math.max(...spans.map((s) => s.time_delta)); // should be 0
+  if (minTimeDelta + increment > maxTimeDelta) {
+    throw new Error(`Invalid increment: ${increment}. Waterfall is only ${maxTimeDelta-minTimeDelta} wide`);
+  }
   const totalWaterfallWidth = maxTimeDelta - minTimeDelta;
   const waterfallImageWidth = Math.max(
     ...waterfallImageDescription.map((w) => w.start + w.width)
   );
-  if (minTimeDelta + increment + waterfallImageWidth > maxTimeDelta) {
-    return "Give up, there's no way this is gonna fit";
-  }
   const waterfallImagePixelWidth = Math.floor(
     (totalWaterfallWidth / waterfallImageWidth) * 0.6
   );
@@ -293,8 +294,7 @@ type FoundASpot<T extends HasTimeDelta> = {
 };
 type PossibleFits<T extends HasTimeDelta> =
   | [FoundASpot<T>, null]
-  | [null, "Not enough room"]
-  | [null, "Give up, there's no way this is gonna fit"];
+  | [null, "Not enough room"];
 // typescript makes this hard... use go-style return
 function findASpot<T extends HasTimeDelta>(
   spans: T[],
@@ -309,9 +309,6 @@ function findASpot<T extends HasTimeDelta>(
     waterfallImageDescription,
     incrementFromTheLeft
   );
-  if (fitWithinImage === "Give up, there's no way this is gonna fit") {
-    return [null, "Give up, there's no way this is gonna fit"];
-  }
   const { calculateWidth, calculateTimeDelta } = fitWithinImage;
   const waterfallImageSpecs1 = waterfallImageDescription.map((w, i) => ({
     time_delta: calculateTimeDelta(w.start),
