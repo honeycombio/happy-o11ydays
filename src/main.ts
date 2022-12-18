@@ -92,7 +92,7 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
   const earliestTimeDelta = Math.min(...spanSpecs.map((s) => s.time_delta));
   // the root span has no height, so it doesn't appear in the heatmap
   return tracer.startActiveSpan(
-    "Deck the halls with boughs of holly",
+    "🎼",
     { startTime: placeHorizontallyInBucket(begin, earliestTimeDelta, 0) },
     (rootSpan) => {
       // create all the spans for the picture

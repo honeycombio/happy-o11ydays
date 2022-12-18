@@ -10,7 +10,7 @@ export class SpanSong {
 
   public nameThisSpan(): string {
     if (this.verses.length === 0) {
-      return "🎵 doodeedoodoo ♬";
+      return randomMusic();
     }
     return this.verses[0].nextLine();
   }
@@ -18,6 +18,26 @@ export class SpanSong {
   public nextVerse() {
     this.verses.shift();
   }
+}
+
+function randomMusic() {
+  const musicCharacters = "♪🎶𝄢𝄞🎵♬🎶♩𝄇";
+  const hummingWords = ["doo", "la", "mmm", "dee", "da", "hum", "ooo"];
+  function randomCharacter() {
+    return musicCharacters.charAt(
+      Math.floor(Math.random() * musicCharacters.length)
+    );
+  }
+  function randomHummingWord() {
+    return hummingWords[Math.floor(Math.random() * hummingWords.length)];
+  }
+  return [
+    randomCharacter(),
+    randomHummingWord(),
+    randomHummingWord(),
+    randomHummingWord(),
+    randomCharacter(),
+  ].join(" ");
 }
 
 class Verse {
