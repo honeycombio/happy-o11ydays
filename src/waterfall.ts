@@ -30,15 +30,11 @@ const nothingSpecialOnTheWaterfall = {
 
 type ImageSource = { filename: string; waterfallImageName: string };
 const IMAGE_SOURCES = [
-  Array(1).fill({
-    filename: "input/bee2.png",
-    waterfallImageName: "leftbound bee",
-  }),
-  Array(3).fill({
+  Array(5).fill({
     filename: "input/bigger-tree.png",
     waterfallImageName: "Christmas tree",
   }),
-  Array(8).fill({
+  Array(10).fill({
     filename: "input/tiny-tree.png",
     waterfallImageName: "baby tree",
   }),
