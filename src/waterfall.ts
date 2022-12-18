@@ -92,6 +92,7 @@ function buildOnePicture<T extends HasTimeDelta>(
   var fitError: FoundASpotError = "Not enough room";
   var fitResult: FoundASpot<T> | null = null;
   var incrementFromTheLeft = 0;
+  const maxIncrement = maxIncrementThatMightStillFit(spans, waterfallImageDescriptionWithRoot)
   while (fitError === "Not enough room") {
     [fitResult, fitError] = findASpot(
       spans,
@@ -99,7 +100,7 @@ function buildOnePicture<T extends HasTimeDelta>(
       incrementFromTheLeft++
     );
 
-    if (fitError === "Give up, there's no way this is gonna fit") {
+    if (incrementFromTheLeft >= maxIncrement) {
       console.log("Unable to fit picture...");
       // we are done putting images in there
       return [
@@ -130,6 +131,21 @@ function buildOnePicture<T extends HasTimeDelta>(
     },
     null,
   ];
+}
+
+function maxIncrementThatMightStillFit(
+  spans: HasTimeDelta[],
+  waterfallImageDescription: WaterfallImageRow[]
+) {
+  const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
+  const maxTimeDelta = Math.max(...spans.map((s) => s.time_delta)); // should be 0
+  const waterfallImageWidth = Math.max(
+    ...waterfallImageDescription.map((w) => w.start + w.width)
+  );
+  const biggestTimeDeltaThatMightFit = maxTimeDelta - waterfallImageWidth;
+  const maxIncrementFromLeft = biggestTimeDeltaThatMightFit - minTimeDelta;
+
+  return maxIncrementFromLeft;
 }
 
 function proportion<T extends HasTimeDelta>(
