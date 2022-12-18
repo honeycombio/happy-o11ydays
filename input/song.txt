@@ -1,33 +1,33 @@
-🎼♪
+♪
 On the first day of Christmas
 my true love gave to me
 Honeycomb Observability!
-🎵🎶♩
+🎼🎵🎶♩
 On the second day of Christmas
 my true love gave to me
 Two service maps!
 and Honeycomb Observability.
-♬♩
+🎼♬♩
 On the third day of Christmas
 my true love gave to me
 Three waterfalls
 Two service maps
 and Honeycomb Observability.
-🎶
+🎼🎶
 On the fourth day of Christmas
 my true love gave to me
 Four bottlenecks! (I see them)
 Three waterfalls
 Two service maps
 and Honeycomb Observability.
-𝄞🎵♬♬
+🎼𝄞🎵♬♬
 On the fifth day of Christmas
 Five SLOs!
 Four bottlenecks
 Three waterfalls
 Two service maps
 and Honeycomb Observability.
-🎵
+🎼🎵
 On the sixth day of Christmas
 my true love gave to me
 Six "what is broken?"
@@ -36,7 +36,7 @@ Four bottlenecks
 Three waterfalls
 Two service maps
 and Honeycomb Observability.
-♪🎵♬🎶♩
+🎼♪🎵♬🎶♩
 On the seventh day of Christmas
 my true love gave to me
 Seven "is this normal?"
@@ -46,7 +46,7 @@ Four bottlenecks
 Three waterfalls
 Two service maps
 and Honeycomb Observability.
-𝄞♬♬
+🎼𝄞♬♬
 On the eighth day of Christmas
 my true love gave to me
 Eight "what is different?"
@@ -57,7 +57,7 @@ Four bottlenecks
 Three waterfalls
 Two service maps
 and Honeycomb Observability
-🎵♩
+🎼🎵♩
 On the ninth day of Christmas
 my true love gave to me
 Nine deploy markers.
@@ -69,7 +69,7 @@ Four bottlenecks
 Three waterfalls
 Two service maps
 and Honeycomb Observability
-𝄢♪♬
+🎼𝄢♪♬
 On the tenth day of Christmas
 my true love gave to me
 Ten custom queries!
@@ -82,7 +82,7 @@ Four bottlenecks
 Three waterfalls
 Two service maps
 and Honeycomb Observability
-🎶
+🎼🎶
 On the eleventh day of Christmas
 my true love gave to me
 Eleven metrics counting,
@@ -96,7 +96,7 @@ Four bottlenecks
 Three waterfalls
 Two service maps
 and Honeycomb Observability
-♪♬
+🎼♪♬
 On the twelfth day of Christmas
 my true love gave to me
 Twelve tracers tracing,
@@ -111,4 +111,4 @@ Four bottlenecks
 Three waterfalls
 Two service maps
 and Honeycomb Observability! (whew)
-🎼♪🎶𝄢𝄞🎵♬♬🎶♩𝄇
+🎼♪🎶𝄢𝄞🎵♬🎶♩𝄇

@@ -116,7 +116,7 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
             parentContexts.shift();
           }
           tracer.startActiveSpan(
-            song.nameThisSpan(),
+            ss.name,
             {
               startTime,
               attributes: ss,

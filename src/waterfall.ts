@@ -1,8 +1,10 @@
 import { Pixel, Pixels, readImage } from "./image";
+import { SpanSong } from "./song";
 
 type HasTimeDelta = { time_delta: DistanceFromRight };
 export type FractionOfGranularity = number;
 export type TraceSpanSpec = {
+  name: string;
   increment: number;
   waterfallWidth: FractionOfGranularity;
   popBefore: number;
@@ -37,11 +39,11 @@ const nothingSpecialOnTheWaterfall = {
  */
 type ImageSource = { filename: string; waterfallImageName: string };
 const IMAGE_SOURCES = [
-  Array(5).fill({
+  Array(10).fill({
     filename: "input/bigger-tree.png",
     waterfallImageName: "Christmas tree",
   }),
-  Array(10).fill({
+  Array(1).fill({
     filename: "input/tiny-tree.png",
     waterfallImageName: "baby tree",
   }),
@@ -78,10 +80,35 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   );
 
   shuffleRoots(result.imageSpans); // mutates
+  const imageSpans = assignNames(result.imageSpans);
   return [
-    ...result.rest.map((s) => ({ ...s, ...nothingSpecialOnTheWaterfall })),
-    ...result.imageSpans.flat(),
+    ...result.rest.map((s) => ({
+      ...s,
+      ...nothingSpecialOnTheWaterfall,
+      name: "unused",
+    })),
+    ...imageSpans,
   ];
+}
+
+function assignNames<T extends HasTimeDelta & TraceSpanSpec>(
+  images: T[][]
+): T[] {
+  function byRootStartTime(a: T[], b: T[]) {
+    return a[0].time_delta - b[0].time_delta;
+  }
+  images.sort(byRootStartTime);
+  const song = new SpanSong("input/song.txt");
+  images.forEach((im, i1) => {
+    im.forEach((s, i2) => {
+      if (!s.spanEvent) {
+        s.name = song.nameThisSpan();
+      }
+    });
+    song.nextVerse();
+  });
+  const flattened = images.flat();
+  return flattened;
 }
 
 // https://dev.to/codebubb/how-to-shuffle-an-array-in-javascript-2ikj
