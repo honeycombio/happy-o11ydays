@@ -204,11 +204,13 @@ function readImageData(filename: string): WaterfallImageRow[] {
       (x) => !hasSomeBlue(pixels.at(x, y))
     );
     const width = possibleWidth === -1 ? pixels.width - start : possibleWidth;
+    const representativePixel = pixels.at(start, y); // not good if there's a sparkle there
     return [
       {
         start,
         width,
-        waterfallColor: pixels.at(start, y).asFlatJson(),
+        waterfallPixel: representativePixel.asFlatJson(),
+        waterfallColor: representativePixel.color.toString(),
       },
       ...findSparkles(pixels, y),
     ];
@@ -260,11 +262,15 @@ function determineTreeStructure<T extends HasTimeDelta & MightBeASpanEvent>(
     if (i === 0) {
       // this is the root of the image
       popBefore = 1; // this is the default. Sibling of whatever is above.
-      increment = 0; // random placement :-/
+      increment = 0; // random placement for the root :-/
     } else if (w.spanEvent) {
-      // it does not participate in the tree structure
-      popBefore = 1; // this is the default. Sibling of whatever is above.
-      increment = 0; // random placement :-/
+      // it does not participate in the tree structure. bypass
+      return {
+        ...w,
+        popBefore: 1,
+        popAfter: 0,
+        increment: 0,
+      };
     } else {
       while (
         parentTimeDeltas[0].time_delta <= w.time_delta &&
