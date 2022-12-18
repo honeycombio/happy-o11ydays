@@ -38,6 +38,10 @@ const IMAGE_SOURCES = [
     filename: "input/tiny-tree.png",
     waterfallImageName: "baby tree",
   }),
+  Array(1).fill({
+    filename: "input/bee.png",
+    waterfallImageName: "Christmas bee",
+  }),
   Array(20).fill({
     filename: "input/ornament.png",
     waterfallImageName: "ornament",
