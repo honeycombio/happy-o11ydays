@@ -10,7 +10,12 @@ export type TraceSpanSpec = {
 } & MightBeASpanEvent;
 type MightBeASpanEvent = { spanEvent: boolean };
 
-type WaterfallImageRow = { start: number; width: number; sparkle?: boolean };
+type WaterfallImageRow = {
+  start: number;
+  width: number;
+  sparkle?: boolean;
+  waterfallColor: string;
+};
 type DistanceFromRight = number; // nonpositive integer
 type StartToTimeDelta = (start: number) => DistanceFromRight;
 type WidthToWaterfallWidth = (width: number) => FractionOfGranularity;
@@ -24,10 +29,22 @@ const nothingSpecialOnTheWaterfall = {
 };
 
 type ImageSource = { filename: string; waterfallImageName: string };
-const IMAGE_SOURCES = Array(30).fill({
-  filename: "input/ornament.png",
-  waterfallImageName: "ornament",
-});
+const IMAGE_SOURCES = [
+  [
+    {
+      filename: "input/bigger-tree.png",
+      waterfallImageName: "Christmas tree",
+    },
+  ],
+  Array(10).fill({
+    filename: "input/tiny-tree.png",
+    waterfallImageName: "baby tree",
+  }),
+  Array(20).fill({
+    filename: "input/ornament.png",
+    waterfallImageName: "ornament",
+  }),
+].flat();
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
@@ -85,7 +102,7 @@ function buildOnePicture<T extends HasTimeDelta>(
   { filename, waterfallImageName }: ImageSource
 ): BuildOnePictureOutcome<T> {
   const waterfallImageDescriptionWithRoot = [
-    { start: 0, width: 0 }, // invent an early root span because I want this at the top of the trace
+    { start: 0, width: 0, waterfallColor: "none" }, // invent an early root span because I want this at the top of the trace
     ...readImageData(filename),
   ];
 
@@ -227,7 +244,7 @@ function findSparkles(pixels: Pixels, y: number): WaterfallImageRow[] {
       start: p.location.x,
       width: 0,
       sparkle: true,
-      waterfallColor: p.asFlatJson(),
+      waterfallColor: p.color.toString(),
     }));
 }
 
@@ -322,6 +339,7 @@ function findASpot<T extends HasTimeDelta>(
     time_delta: calculateTimeDelta(w.start),
     waterfallWidth: calculateWidth(w.width),
     spanEvent: w.sparkle || false,
+    rowColor: w.waterfallColor,
     waterfallSpec: JSON.stringify({
       row: i,
       imageRoot: i === 0,
