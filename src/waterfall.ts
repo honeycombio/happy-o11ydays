@@ -31,7 +31,7 @@ const IMAGE_SOURCES = Array(30).fill({
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
-  const result = iteratron(
+  const result = reduceUntilStop(
     IMAGE_SOURCES,
     (resultsSoFar, img, i) => {
       const [newResult, err] = buildOnePicture(resultsSoFar.rest, img);
@@ -89,7 +89,7 @@ function buildOnePicture<T extends HasTimeDelta>(
     ...readImageData(filename),
   ];
 
-  var fitError: FoundASpotError = "Not enough room";
+  var fitError: "Not enough room" | null = "Not enough room";
   var fitResult: FoundASpot<T> | null = null;
   var incrementFromTheLeft = 0;
   const maxIncrement = maxIncrementThatMightStillFit(
@@ -162,7 +162,11 @@ function proportion<T extends HasTimeDelta>(
   const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
   const maxTimeDelta = Math.max(...spans.map((s) => s.time_delta)); // should be 0
   if (minTimeDelta + increment > maxTimeDelta) {
-    throw new Error(`Invalid increment: ${increment}. Waterfall is only ${maxTimeDelta-minTimeDelta} wide`);
+    throw new Error(
+      `Invalid increment: ${increment}. Waterfall is only ${
+        maxTimeDelta - minTimeDelta
+      } wide`
+    );
   }
   const totalWaterfallWidth = maxTimeDelta - minTimeDelta;
   const waterfallImageWidth = Math.max(
@@ -284,10 +288,6 @@ function determineTreeStructure<T extends HasTimeDelta & MightBeASpanEvent>(
   return waterfallImageSpecs3;
 }
 
-type FoundASpotError =
-  | "Not enough room"
-  | "Give up, there's no way this is gonna fit"
-  | null;
 type FoundASpot<T extends HasTimeDelta> = {
   waterfallImageSpans: Array<T & MightBeASpanEvent>;
   availableSpans: T[];
@@ -320,44 +320,42 @@ function findASpot<T extends HasTimeDelta>(
       ...w,
     }),
   }));
-  const availableSpans = groupByTimeDelta(spans);
-  try {
-    const waterfallImageSpecs2 = waterfallImageSpecs1.map((w, i) => {
-      // mutating
-      const allocatedSpan = availableSpans[w.time_delta]?.pop();
-      if (allocatedSpan === undefined) {
-        // time to start looking elsewhere!
-        console.log(
-          `I was looking for a span at ${w.time_delta} for row ${i} but there weren't enough`
-        );
-        console.log(
-          "I needed " +
-            waterfallImageSpecs1.filter((w2) => w2.time_delta === w.time_delta)
-              .length
-        );
-        console.log(
-          "but there were " +
-            spans.filter((s) => s.time_delta === w.time_delta).length
-        );
-        throw "Not enough room"; // i'm being lazy
-      }
-      return { ...w, ...allocatedSpan };
-    });
-    return [
-      {
-        waterfallImageSpans: waterfallImageSpecs2 as any, // fuck you typescript
-        availableSpans: Object.values(availableSpans).flat(),
-      },
-      null,
-    ];
-  } catch (e) {
-    if (e === "Not enough room") return [null, e];
-    throw e; // unexpected
+  var availableSpans = groupByTimeDelta(spans);
+  const placementResult = mapUntilFail(waterfallImageSpecs1, (w, i) => {
+    // mutating
+    const allocatedSpan = availableSpans[w.time_delta]?.pop();
+    if (allocatedSpan === undefined) {
+      // time to start looking elsewhere!
+      console.log(
+        `I was looking for a span at ${w.time_delta} for row ${i} but there weren't enough`
+      );
+      console.log(
+        "I needed " +
+          waterfallImageSpecs1.filter((w2) => w2.time_delta === w.time_delta)
+            .length
+      );
+      console.log(
+        "but there were " +
+          spans.filter((s) => s.time_delta === w.time_delta).length
+      );
+      return "fail"; // i'm being lazy
+    }
+    return { ...w, ...allocatedSpan };
+  });
+  if (placementResult === "fail") {
+    return [null, "Not enough room"];
   }
+  return [
+    {
+      waterfallImageSpans: placementResult,
+      availableSpans: Object.values(availableSpans).flat(),
+    },
+    null,
+  ];
 }
 
 // what I really want is an iteratee, so I'll just make one
-function iteratron<T, R>(
+function reduceUntilStop<T, R>(
   arr: T[],
   fn: (prev: R, e: T, i: number) => R | "stop",
   init: R
@@ -369,6 +367,22 @@ function iteratron<T, R>(
       return output;
     } else {
       output = result;
+    }
+  }
+  return output;
+}
+
+function mapUntilFail<T, R>(
+  arr: T[],
+  fn: (e: T, i: number) => R | "fail"
+): R[] | "fail" {
+  var output: R[] = [];
+  for (var i = 0; i < arr.length; i++) {
+    const result = fn(arr[i], i);
+    if (result === "fail") {
+      return "fail";
+    } else {
+      output[i] = result;
     }
   }
   return output;
