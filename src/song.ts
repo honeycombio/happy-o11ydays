@@ -21,12 +21,10 @@ export class SpanSong {
 }
 
 function randomMusic() {
-  const musicCharacters = "♪🎶𝄢𝄞🎵♬🎶♩𝄇";
+  const musicCharacters = [..."♪🎶𝄢𝄞🎵♬🎶♩𝄇"];
   const hummingWords = ["doo", "la", "mmm", "dee", "da", "hum", "ooo"];
   function randomCharacter() {
-    return musicCharacters.charAt(
-      Math.floor(Math.random() * musicCharacters.length)
-    );
+    return musicCharacters[Math.floor(Math.random() * musicCharacters.length)];
   }
   function randomHummingWord() {
     return hummingWords[Math.floor(Math.random() * hummingWords.length)];
