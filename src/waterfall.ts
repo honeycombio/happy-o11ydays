@@ -87,14 +87,18 @@ function shuffleArray<T>(array: T[]) {
   }
 }
 
-// mutating
+// mutating.
+// changes the starts of the roots around so the pictures aren't all in a row
 function shuffleRoots<T extends HasTimeDelta>(
   imagesInWaterfall: Array<Array<T>>
 ) {
-  const roots = imagesInWaterfall.map((ii) => ii[0]);
+  const roots = imagesInWaterfall.map((ii) => ii[0].time_delta);
   shuffleArray(roots);
-  imagesInWaterfall.forEach((imageRows, i) => (imageRows[0] = roots[i]));
+  imagesInWaterfall.forEach(
+    (imageRows, i) => (imageRows[0].time_delta = roots[i])
+  );
 }
+
 type BuildOnePictureOutcome<T extends HasTimeDelta> = [
   { imageSpans: Array<T & TraceSpanSpec>; rest: T[] },
   "Give up, there's no way this is gonna fit" | null
