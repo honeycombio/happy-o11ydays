@@ -326,7 +326,6 @@ function findASpot<T extends HasTimeDelta>(
           "but there were " +
             spans.filter((s) => s.time_delta === w.time_delta).length
         );
-        console.log("TODO: keep looking for a spot we can fit this");
         throw "Not enough room"; // i'm being lazy
       }
       return { ...w, ...allocatedSpan };
