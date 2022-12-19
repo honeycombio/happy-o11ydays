@@ -20,7 +20,9 @@ export type AuthResponse = {
   };
 };
 
-export async function fetchAuthorization(apiKey: string) {
+export async function fetchAuthorization(
+  apiKey: string
+): Promise<AuthResponse | undefined> {
   const resp = await axios
     .get<AuthResponse>("https://api.honeycomb.io/1/auth", {
       responseType: "json",
@@ -73,4 +75,29 @@ export async function findLinkToDataset(
 
   //return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}/trace?trace_id=${traceId}`;
   return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}`;
+}
+
+export async function checkAuthorization() {
+  const { apiKey } = fetchConfiguration();
+  if (apiKey === undefined) {
+    throw new Error(
+      "hmm, no HONEYCOMB_API_KEY. If you run this with './run' it'll set you up better"
+    );
+  }
+  if (!process.env["OTEL_EXPORTER_OTLP_ENDPOINT"]) {
+    throw new Error(
+      "Looks like OTEL_EXPORTER_OTLP_ENDPOINT isn't set up. Please run this app with the ./run script"
+    );
+  }
+  const authData = await fetchAuthorization(apiKey);
+  if (!authData) {
+    throw new Error(
+      "Couldn't verify your API key with Honeycomb. Hmm, try pasting your HONEYCOMB_API_KEY into https://honeycomb-whoami.glitch.me to test it"
+    );
+  }
+  if (!authData?.api_key_access.createDatasets) {
+    console.log(
+      "WARNING: No create dataset permission... if this is the only API key you can get, then set OTEL_SERVICE_NAME to an existing dataset."
+    );
+  }
 }

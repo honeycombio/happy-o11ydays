@@ -4,7 +4,7 @@ import { populateAttributes } from "./bubbleUp";
 import { SpanSong } from "./song";
 
 import otel, { Context, Span } from "@opentelemetry/api";
-import { findLinkToDataset } from "./honeyApi";
+import { checkAuthorization, findLinkToDataset } from "./honeyApi";
 import {
   approximateColorByNumberOfSpans,
   placeHorizontallyInBucket,
@@ -29,6 +29,7 @@ const greeting = ` _________________
 `;
 
 async function main(imageFile: string) {
+  await checkAuthorization();
   await initializeDataset();
 
   await sdk.start();
