@@ -65,7 +65,7 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
     (resultsSoFar, img, i) => {
       const [newResult, err] = buildOnePicture(resultsSoFar.rest, img);
       if (err) {
-        console.log("Well, we got to image #" + i);
+        console.log(`${i} pictures built into trace`);
         return "stop";
       }
       return {
@@ -169,7 +169,6 @@ function buildOnePicture<T extends HasTimeDelta>(
   );
 
   if (finalFitResult === "fail") {
-    console.log("Unable to fit picture...");
     // we are done putting images in there
     return [
       { imageSpans: [], rest: spans },
@@ -367,9 +366,6 @@ function findASpot<T extends HasTimeDelta>(
   waterfallImageDescription: WaterfallImageRow[],
   incrementFromTheLeft: number
 ): PossibleFits<T> {
-  console.log(
-    `BEGIN: there are ${spans.length} spans, and increment is ${incrementFromTheLeft}`
-  );
   const fitWithinImage = proportion(
     spans,
     waterfallImageDescription,
@@ -393,19 +389,7 @@ function findASpot<T extends HasTimeDelta>(
     const allocatedSpan = availableSpans[w.time_delta]?.pop();
     if (allocatedSpan === undefined) {
       // time to start looking elsewhere!
-      console.log(
-        `I was looking for a span at ${w.time_delta} for row ${i} but there weren't enough`
-      );
-      console.log(
-        "I needed " +
-          waterfallImageSpecs1.filter((w2) => w2.time_delta === w.time_delta)
-            .length
-      );
-      console.log(
-        "but there were " +
-          spans.filter((s) => s.time_delta === w.time_delta).length
-      );
-      return "fail"; // i'm being lazy
+      return "fail";
     }
     return { ...w, ...allocatedSpan };
   });
