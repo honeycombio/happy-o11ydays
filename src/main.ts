@@ -1,8 +1,9 @@
 import { sdk } from "./tracing";
 import { Pixels, readImage } from "./image";
 import { populateAttributes } from "./bubbleUp";
+import { SpanSong } from "./song";
 
-import otel from "@opentelemetry/api";
+import otel, { Context, Span } from "@opentelemetry/api";
 import { findLinkToDataset } from "./honeyApi";
 import {
   approximateColorByNumberOfSpans,
@@ -10,9 +11,12 @@ import {
   placeVerticallyInBuckets,
   SecondsSinceEpoch,
   HeatmapSpanSpec,
+  planEndTime,
+  HrTime,
 } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
+import { buildPicturesInWaterfall, TraceSpanSpec } from "./waterfall";
 
 const greeting = ` _________________ 
 < Happy O11ydays! >
@@ -39,7 +43,7 @@ async function main(imageFile: string) {
   const traceId = sendSpans(spanSpecs);
   console.log("We did it! The trace ID is: " + traceId);
 
-  const link = await findLinkToDataset();
+  const link = await findLinkToDataset(traceId);
   console.log("Run a new query for HEATMAP(height) in this dataset: " + link);
 
   sdk.shutdown();
@@ -47,7 +51,9 @@ async function main(imageFile: string) {
   setTimeout(() => console.log(" hopefully they've all been sent)"), 10000);
 }
 
-type SpanSpec = HeatmapSpanSpec & Record<string, number | string>;
+type SpanSpec = HeatmapSpanSpec &
+  TraceSpanSpec &
+  Record<string, number | string | boolean>;
 
 function planSpans(pixels: Pixels): SpanSpec[] {
   const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
@@ -71,7 +77,8 @@ function planSpans(pixels: Pixels): SpanSpec[] {
     })
     .flat();
 
-  const spanSpecs = addStackedGraphAttributes(heatmapSpanSpecs);
+  const graphSpanSpecs = addStackedGraphAttributes(heatmapSpanSpecs);
+  const spanSpecs = buildPicturesInWaterfall(graphSpanSpecs);
 
   return spanSpecs;
 }
@@ -79,25 +86,68 @@ function planSpans(pixels: Pixels): SpanSpec[] {
 type TraceID = string;
 const tracer = otel.trace.getTracer("viz-art");
 function sendSpans(spanSpecs: SpanSpec[]): TraceID {
-  const begin: SecondsSinceEpoch = Date.now() / 1000;
+  const begin: SecondsSinceEpoch = Math.ceil(Date.now() / 1000);
+  const song = new SpanSong("input/song.txt");
   var traceId: string;
+  const earliestTimeDelta = Math.min(...spanSpecs.map((s) => s.time_delta));
   // the root span has no height, so it doesn't appear in the heatmap
   return tracer.startActiveSpan(
-    "Deck the halls with boughs of holly",
+    "🎼",
+    { startTime: placeHorizontallyInBucket(begin, earliestTimeDelta, 0) },
     (rootSpan) => {
       // create all the spans for the picture
-      spanSpecs.sort(byTime).forEach((ss) => {
-        const s = tracer.startSpan("la", {
-          startTime: placeHorizontallyInBucket(begin, ss.time_delta),
-          attributes: ss,
-        });
-        s.end();
+      var parentContexts: Array<Context> = [];
+      var openSpan: Span = rootSpan;
+      var openSpanEndTime: HrTime | undefined = undefined;
+      spanSpecs.forEach((ss, i) => {
+        const startTime = placeHorizontallyInBucket(
+          begin,
+          ss.time_delta,
+          ss.increment
+        );
+        if (ss.spanEvent) {
+          // something completely different
+          openSpan.addEvent("sparkle", ss, startTime);
+        } else {
+          if (openSpan !== rootSpan) {
+            openSpan.end(openSpanEndTime);
+          }
+          for (var i = 0; i < ss.popBefore; i++) {
+            parentContexts.shift();
+          }
+          tracer.startActiveSpan(
+            ss.name,
+            {
+              startTime,
+              attributes: ss,
+            },
+            parentContexts[0] || otel.context.active(),
+            (s) => {
+              parentContexts.unshift(otel.context.active());
+              for (var i = 0; i < ss.popAfter; i++) {
+                parentContexts.shift();
+              }
+              openSpan = s;
+              openSpanEndTime = planEndTime(startTime, ss.waterfallWidth);
+            }
+          );
+        }
       });
       traceId = rootSpan.spanContext().traceId;
+      openSpan.end(openSpanEndTime);
       rootSpan.end();
       return traceId;
     }
   );
+}
+
+// mutates its input
+function drainAll(parentSpans: Array<[Span, HrTime]>) {
+  var endme;
+  while ((endme = parentSpans.pop())) {
+    const [s, endTime] = endme;
+    s.end(endTime);
+  }
 }
 
 const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {

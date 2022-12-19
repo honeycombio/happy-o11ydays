@@ -11,8 +11,8 @@ const traceExporter = new OTLPTraceExporter();
 
 const sdk = new NodeSDK({
   spanProcessor: new BatchSpanProcessor(traceExporter, {
-    scheduledDelayMillis: 500,
-    maxQueueSize: 16000,
+    scheduledDelayMillis: 200,
+    maxQueueSize: 20000,
     maxExportBatchSize: 1000,
   }),
   // no instrumentations. All spans are manual here
