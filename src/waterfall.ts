@@ -127,11 +127,9 @@ function shuffleArray<T>(array: T[]) {
 function shuffleRoots<T extends HasTimeDelta>(
   imagesInWaterfall: Array<Array<T>>
 ) {
-  const roots = imagesInWaterfall.map((ii) => ii[0].time_delta);
+  const roots = imagesInWaterfall.map((ii) => ii[0]);
   shuffleArray(roots);
-  imagesInWaterfall.forEach(
-    (imageRows, i) => (imageRows[0].time_delta = roots[i])
-  );
+  imagesInWaterfall.forEach((imageRows, i) => (imageRows[0] = roots[i]));
 }
 
 type BuildOnePictureOutcome<T extends HasTimeDelta> = [
