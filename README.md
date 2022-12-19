@@ -169,7 +169,7 @@ then hovering over rows might reveal that response times are much slower for a f
 
 ### Bubble Up on Group By
 
-Hover over one of the rows on the table, and then click the three dots. From there, select "Bubble up on (field name) = (value)".
+Hover over one of the rows on the table, and then click the three dots. From there, select "BubbleUp: Compare (field name) = (value) to all other events".
 
 Now the events in this group are yellow. Does it look right? What else is different about these events, compared to the others?
 
