@@ -85,7 +85,7 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
     ...result.rest.map((s) => ({
       ...s,
       ...nothingSpecialOnTheWaterfall,
-      name: "unused",
+      name: "hello there",
     })),
     ...imageSpans,
   ];
