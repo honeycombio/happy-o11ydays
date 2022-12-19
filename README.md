@@ -16,7 +16,7 @@ You can clone this repository, or open in an online IDE in GitPod:
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/honeycombio/happy-o11ydays)
 
-Get a [Honeycomb API Key]().
+Get a [Honeycomb API Key](https://docs.honeycomb.io/getting-data-in/api-keys/#find-api-keys).
 
 Put that in an environment variable:
 
