@@ -49,6 +49,9 @@ async function main(imageFile: string) {
   sdk.shutdown();
   console.log("(Pausing to send buffered spans...");
   setTimeout(() => console.log(" hopefully they've all been sent)"), 10000);
+  console.log(
+    "Check the README for how to get the query just right, and see the picture, and then investigate it!"
+  );
 }
 
 type SpanSpec = HeatmapSpanSpec &
