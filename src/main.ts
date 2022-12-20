@@ -91,7 +91,6 @@ type TraceID = string;
 const tracer = otel.trace.getTracer("viz-art");
 function sendSpans(spanSpecs: SpanSpec[]): TraceID {
   const begin: SecondsSinceEpoch = Math.ceil(Date.now() / 1000);
-  const song = new SpanSong("input/song.txt");
   var traceId: string;
   const earliestTimeDelta = Math.min(...spanSpecs.map((s) => s.time_delta));
   // the root span has no height, so it doesn't appear in the heatmap
@@ -100,10 +99,10 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
     { startTime: placeHorizontallyInBucket(begin, earliestTimeDelta, 0) },
     (rootSpan) => {
       // create all the spans for the picture
-      var parentContexts: Array<Context> = [];
-      var openSpan: Span = rootSpan;
-      var openSpanEndTime: HrTime | undefined = undefined;
-      spanSpecs.forEach((ss, i) => {
+      var parentContexts: Array<Context> = []; // so that I can make things children of previous spans
+      var openSpan: Span = rootSpan; // so that I can add events to it
+      var openSpanEndTime: HrTime | undefined = undefined; // so that I can end that openSpan correctly
+      spanSpecs.forEach((ss, _spanNumber) => {
         const startTime = placeHorizontallyInBucket(
           begin,
           ss.time_delta,
@@ -113,11 +112,9 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
           // something completely different
           openSpan.addEvent("sparkle", ss, startTime);
         } else {
-          if (openSpan !== rootSpan) {
-            openSpan.end(openSpanEndTime);
-          }
+          closePreviousSpan(rootSpan, openSpan, openSpanEndTime);
           for (var i = 0; i < ss.popBefore; i++) {
-            parentContexts.shift();
+            parentContexts.shift(); // this says: don't be a child of the previous span
           }
           tracer.startActiveSpan(
             ss.name,
@@ -129,7 +126,7 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
             (s) => {
               parentContexts.unshift(otel.context.active());
               for (var i = 0; i < ss.popAfter; i++) {
-                parentContexts.shift();
+                parentContexts.shift(); // this says: i'm done with this little picture, back up to the root
               }
               openSpan = s;
               openSpanEndTime = planEndTime(startTime, ss.waterfallWidth);
@@ -145,12 +142,14 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
   );
 }
 
-// mutates its input
-function drainAll(parentSpans: Array<[Span, HrTime]>) {
-  var endme;
-  while ((endme = parentSpans.pop())) {
-    const [s, endTime] = endme;
-    s.end(endTime);
+function closePreviousSpan(
+  rootSpan: Span,
+  openSpan: Span,
+  openSpanEndTime: HrTime | undefined
+) {
+  if (openSpan !== rootSpan) {
+    // now that we've added all the spanEvents, close the previous span
+    openSpan.end(openSpanEndTime);
   }
 }
 
@@ -161,3 +160,4 @@ const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {
 const imageFile = process.argv[2] || "input/dontpeek.png";
 
 main(imageFile);
+
