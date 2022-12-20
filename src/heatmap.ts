@@ -1,12 +1,22 @@
 import { populateAttributes } from "./bubbleUp";
 import { Pixel, Pixels } from "./image";
 
+/**
+ * Draw an image using spans on a heatmap.
+ *
+ * The image needs to be 25-50 pixels high.
+ * To fit in the last 10 minutes graph, be about 120 pixels wide.
+ * the BLUE channel is what matters for the heatmap; RED and GREEN are ignored.
+ * Transparent and white pixels are skipped.
+ *
+ * (RED can determine attributes; see bubbleUp.ts)
+ */
+
 export type SecondsSinceEpoch = number;
 export type Seconds = number;
 export type Nanoseconds = number;
 export type HrTime = [SecondsSinceEpoch, Nanoseconds];
 export const Granularity: Seconds = 5;
-
 
 type CountOfSpans = number; // 0 to maxSpansAtOnePoint
 type NegativeIntegerPixelsFromRight = number;
@@ -41,7 +51,7 @@ export function convertPixelsToSpans(pixels: Pixels) {
     })
     .flat();
 
-    return heatmapSpanSpecs;
+  return heatmapSpanSpecs;
 }
 
 export function approximateColorByNumberOfSpans(

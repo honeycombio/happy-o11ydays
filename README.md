@@ -65,7 +65,7 @@ When someone else looks at this dataset, you want them to see the picture too.
 Let's make it choose 5 seconds as the granularity automatically, so people
 don't have to change it every time.
 
-The right panel has a link to Dataset Settings. 
+The right panel has a link to Dataset Settings.
 
 ![link in right panel](docs/link-to-settings.png)
 
@@ -196,3 +196,21 @@ To do this, be a team owner (or pair with one). Be in the development environmen
 Choose "Datasets" on the left nav. Then click the name of the dataset, like "viz-art" or whatever yours is called.
 This opens dataset settings. From here, one of the tabs at the top says "Delete." This tab has the button you want.
 
+## Use this program to draw other pictures
+
+This code generates the heatmap image from a .png.
+
+Create an image that is:
+
+- .png, in RGBA color format (this is pretty normal)
+- 26-50 pixels tall
+- up to 100 pixels wide (wider is OK, but 100 is nice for a ten-minute time range)
+- with a white and/or transparent background
+- containing a picture in shades of blue (red and green components are ignored)
+- but no more than 10 shades of blue
+
+and then run this program like
+
+`./run path/to/your-image.png`
+
+Now go do the HEATMAP(height) and see what it looks like. Tweet a screenshot at @honeycombio please!
