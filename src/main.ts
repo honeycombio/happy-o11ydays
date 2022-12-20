@@ -1,18 +1,15 @@
 import { sdk } from "./tracing";
 import { Pixels, readImage } from "./image";
-import { populateAttributes } from "./bubbleUp";
-import { SpanSong } from "./song";
 
 import otel, { Context, Span } from "@opentelemetry/api";
 import { checkAuthorization, findLinkToDataset } from "./honeyApi";
 import {
-  approximateColorByNumberOfSpans,
   placeHorizontallyInBucket,
-  placeVerticallyInBuckets,
   SecondsSinceEpoch,
   HeatmapSpanSpec,
   planEndTime,
   HrTime,
+  convertPixelsToSpans,
 } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
@@ -60,26 +57,8 @@ type SpanSpec = HeatmapSpanSpec &
   Record<string, number | string | boolean>;
 
 function planSpans(pixels: Pixels): SpanSpec[] {
-  const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
 
-  const spansForColor = approximateColorByNumberOfSpans(visiblePixels);
-  const heatmapHeight = placeVerticallyInBuckets(visiblePixels, pixels.height);
-
-  // turn each pixel into some spans
-  const heatmapSpanSpecs = visiblePixels
-    .map((p) => {
-      const spans_at_once = spansForColor(p);
-      return Array(spans_at_once)
-        .fill({})
-        .map((_) => ({
-          ...p.asFlatJson(), // add all the fields, for observability ;-)
-          spans_at_once,
-          time_delta: p.location.x - pixels.width,
-          height: heatmapHeight(p.location.y), // make it noninteger, so hny knows this is a float field
-          ...populateAttributes(p), // for bubble up
-        }));
-    })
-    .flat();
+  const heatmapSpanSpecs = convertPixelsToSpans(pixels);
 
   const graphSpanSpecs = addStackedGraphAttributes(heatmapSpanSpecs);
   const spanSpecs = buildPicturesInWaterfall(graphSpanSpecs);

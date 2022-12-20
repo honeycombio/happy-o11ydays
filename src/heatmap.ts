@@ -1,4 +1,5 @@
-import { Pixel } from "./image";
+import { populateAttributes } from "./bubbleUp";
+import { Pixel, Pixels } from "./image";
 
 export type SecondsSinceEpoch = number;
 export type Seconds = number;
@@ -17,6 +18,31 @@ export type HeatmapSpanSpec = {
 
 type RowInPng = number; // distance from the top of the png, in pixels. Int
 type HeatmapHeight = number; // the height we should heatmap on. float. NEVER a whole number
+
+export function convertPixelsToSpans(pixels: Pixels) {
+  const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
+
+  const spansForColor = approximateColorByNumberOfSpans(visiblePixels);
+  const heatmapHeight = placeVerticallyInBuckets(visiblePixels, pixels.height);
+
+  // turn each pixel into some spans
+  const heatmapSpanSpecs = visiblePixels
+    .map((p) => {
+      const spans_at_once = spansForColor(p);
+      return Array(spans_at_once)
+        .fill({})
+        .map((_) => ({
+          ...p.asFlatJson(), // add all the fields, for observability ;-)
+          spans_at_once,
+          time_delta: p.location.x - pixels.width,
+          height: heatmapHeight(p.location.y), // make it noninteger, so hny knows this is a float field
+          ...populateAttributes(p), // for bubble up
+        }));
+    })
+    .flat();
+
+    return heatmapSpanSpecs;
+}
 
 export function approximateColorByNumberOfSpans(
   allPixels: Pixel[]
