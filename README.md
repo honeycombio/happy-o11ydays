@@ -2,6 +2,8 @@
 
 It's picture time!
 
+![the honeycomb logo in a honeycomb heatmap](docs/hny-logo-heatmap.png)
+
 Run the code in this repo, hooked up to your Honeycomb team. The program will send some events to Honeycomb, and those events will vizualize into a picture.
 
 In the process, learn some tricks about Honeycomb.
