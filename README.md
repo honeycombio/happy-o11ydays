@@ -22,6 +22,10 @@ Put that in an environment variable:
 
 `export HONEYCOMB_API_KEY="your-api-key"`
 
+Once, install dependencies:
+
+`npm install`
+
 Now run the program:
 
 `./run`
