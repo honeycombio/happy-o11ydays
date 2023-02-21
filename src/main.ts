@@ -29,7 +29,6 @@ async function main(imageFile: string) {
   await checkAuthorization();
   await initializeDataset();
 
-  await sdk.start();
   console.log(greeting);
 
   const pixels = readImage(imageFile);
@@ -44,9 +43,6 @@ async function main(imageFile: string) {
   const link = await findLinkToDataset(traceId);
   console.log("Run a new query for HEATMAP(height) in this dataset: " + link);
 
-  sdk.shutdown();
-  console.log("(Pausing to send buffered spans...");
-  setTimeout(() => console.log(" hopefully they've all been sent)"), 10000);
   console.log(
     "Check the README for how to get the query just right, and see the picture, and then investigate it!"
   );
@@ -57,7 +53,6 @@ type SpanSpec = HeatmapSpanSpec &
   Record<string, number | string | boolean>;
 
 function planSpans(pixels: Pixels): SpanSpec[] {
-
   const heatmapSpanSpecs = convertPixelsToSpans(pixels);
 
   const graphSpanSpecs = addStackedGraphAttributes(heatmapSpanSpecs);
@@ -138,5 +133,11 @@ const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {
 
 const imageFile = process.argv[2] || "input/dontpeek.png";
 
-main(imageFile);
-
+sdk
+  .start()
+  .then(() => main(imageFile))
+  .then(() => sdk.shutdown())
+  .then(() => {
+    console.log("(Pausing to send buffered spans...");
+    setTimeout(() => console.log(" hopefully they've all been sent)"), 10000);
+  });
