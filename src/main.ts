@@ -136,8 +136,4 @@ const imageFile = process.argv[2] || "input/dontpeek.png";
 sdk
   .start()
   .then(() => main(imageFile))
-  .then(() => sdk.shutdown())
-  .then(() => {
-    console.log("(Pausing to send buffered spans...");
-    setTimeout(() => console.log(" hopefully they've all been sent)"), 10000);
-  });
+  .then(() => sdk.shutdown());
