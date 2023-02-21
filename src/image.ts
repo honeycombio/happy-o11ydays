@@ -1,9 +1,17 @@
 import { PNG, PNGWithMetadata } from "pngjs";
 import fs from "fs";
+import otel from "@opentelemetry/api";
+
+const tracer = otel.trace.getTracer("image.ts");
 
 function readPng(location: string): PNGWithMetadata {
-  var data = fs.readFileSync(location);
-  return PNG.sync.read(data);
+  return tracer.startActiveSpan("readPng", (s) => {
+    s.setAttribute("app.fileLocation", location);
+    var data = fs.readFileSync(location);
+    const result = PNG.sync.read(data);
+    s.end();
+    return result;
+  });
 }
 
 function range(from: number, to: number): ReadonlyArray<number> {
