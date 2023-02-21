@@ -134,7 +134,11 @@ const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {
 
 const imageFile = process.argv[2] || "input/dontpeek.png";
 const rootContext = otel.context.active();
+const traceThisProgram = otel.trace.getTracer("main.js");
 sdk
   .start()
-  .then(() => main(rootContext, imageFile))
+  .then(() =>
+    traceThisProgram.startActiveSpan("main", (span) => 
+      main(rootContext, imageFile).then(() => span.end()))
+  )
   .then(() => sdk.shutdown());
