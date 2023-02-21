@@ -25,7 +25,7 @@ const greeting = ` _________________
                 ||     ||
 `;
 
-async function main(imageFile: string) {
+async function main(rootContext: Context, imageFile: string) {
   await checkAuthorization();
   await initializeDataset();
 
@@ -37,7 +37,7 @@ async function main(imageFile: string) {
   const spanSpecs = planSpans(pixels);
   console.log(`Sending ${spanSpecs.length} spans...`);
 
-  const traceId = sendSpans(spanSpecs);
+  const traceId = sendSpans(rootContext, spanSpecs);
   console.log("We did it! The trace ID is: " + traceId);
 
   const link = await findLinkToDataset(traceId);
@@ -63,7 +63,7 @@ function planSpans(pixels: Pixels): SpanSpec[] {
 
 type TraceID = string;
 const tracer = otel.trace.getTracer("viz-art");
-function sendSpans(spanSpecs: SpanSpec[]): TraceID {
+function sendSpans(rootContext: Context, spanSpecs: SpanSpec[]): TraceID {
   const begin: SecondsSinceEpoch = Math.ceil(Date.now() / 1000);
   var traceId: string;
   const earliestTimeDelta = Math.min(...spanSpecs.map((s) => s.time_delta));
@@ -71,6 +71,7 @@ function sendSpans(spanSpecs: SpanSpec[]): TraceID {
   return tracer.startActiveSpan(
     "🎼",
     { startTime: placeHorizontallyInBucket(begin, earliestTimeDelta, 0) },
+    rootContext,
     (rootSpan) => {
       // create all the spans for the picture
       var parentContexts: Array<Context> = []; // so that I can make things children of previous spans
@@ -132,8 +133,8 @@ const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {
 };
 
 const imageFile = process.argv[2] || "input/dontpeek.png";
-
+const rootContext = otel.context.active();
 sdk
   .start()
-  .then(() => main(imageFile))
+  .then(() => main(rootContext, imageFile))
   .then(() => sdk.shutdown());
