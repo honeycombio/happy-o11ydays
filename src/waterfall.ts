@@ -1,5 +1,8 @@
 import { Pixel, Pixels, readImage } from "./image";
 import { SpanSong } from "./song";
+import otel from "@opentelemetry/api";
+
+const tracer = otel.trace.getTracer("waterfall.ts");
 
 type HasTimeDelta = { time_delta: DistanceFromRight };
 export type FractionOfGranularity = number;
@@ -60,35 +63,41 @@ const IMAGE_SOURCES = [
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
-  const result = reduceUntilStop(
-    IMAGE_SOURCES,
-    (resultsSoFar, img, i) => {
-      const [newResult, err] = buildOnePicture(resultsSoFar.rest, img);
-      if (err) {
-        console.log(`${i} pictures built into trace`);
-        return "stop";
-      }
-      return {
-        imageSpans: [...resultsSoFar.imageSpans, newResult.imageSpans],
-        rest: newResult.rest,
-      };
-    },
-    {
-      imageSpans: [] as Array<Array<T & TraceSpanSpec>>,
-      rest: spans,
+  return tracer.startActiveSpan(
+    "build pictures in waterfall",
+    (currentSpan) => {
+      const result = reduceUntilStop(
+        IMAGE_SOURCES,
+        (resultsSoFar, img, i) => {
+          const [newResult, err] = buildOnePicture(resultsSoFar.rest, img);
+          if (err) {
+            console.log(`${i} pictures built into trace`);
+            return "stop";
+          }
+          return {
+            imageSpans: [...resultsSoFar.imageSpans, newResult.imageSpans],
+            rest: newResult.rest,
+          };
+        },
+        {
+          imageSpans: [] as Array<Array<T & TraceSpanSpec>>,
+          rest: spans,
+        }
+      );
+
+      shuffleRoots(result.imageSpans); // mutates
+      const imageSpans = assignNames(result.imageSpans);
+      currentSpan.end();
+      return [
+        ...result.rest.map((s) => ({
+          ...s,
+          ...nothingSpecialOnTheWaterfall,
+          name: "hello there",
+        })),
+        ...imageSpans,
+      ];
     }
   );
-
-  shuffleRoots(result.imageSpans); // mutates
-  const imageSpans = assignNames(result.imageSpans);
-  return [
-    ...result.rest.map((s) => ({
-      ...s,
-      ...nothingSpecialOnTheWaterfall,
-      name: "hello there",
-    })),
-    ...imageSpans,
-  ];
 }
 
 function assignNames<T extends HasTimeDelta & TraceSpanSpec>(
