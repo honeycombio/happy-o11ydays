@@ -93,24 +93,20 @@ export async function checkAuthorization() {
   return tracer.startActiveSpan("check authorization", async (s) => {
     const { apiKey } = fetchConfiguration();
     if (apiKey === undefined) {
-      const e = new Error(
-        "hmm, no HONEYCOMB_API_KEY. If you run this with './run' it'll set you up better"
-      );
-      s.setStatus({ code: 1, message: e.message });
+      const w =
+        "hmm, no HONEYCOMB_API_KEY. For full functionality, get one, and run this with './run' it'll set you up better";
+      s.setStatus({ code: 1, message: w });
       s.setAttribute("error", true);
-      s.recordException(e); // not that you'll ever see it
+      s.setAttribute("app.warning", w);
       s.end();
-      throw e;
+      return;
     }
     if (!process.env["OTEL_EXPORTER_OTLP_ENDPOINT"]) {
-      const e = new Error(
-        "Looks like OTEL_EXPORTER_OTLP_ENDPOINT isn't set up. Please run this app with the ./run script"
-      );
-      s.recordException(e); // not that you'll ever see it
-      s.setStatus({ code: 2, message: e.message });
-      s.setAttribute("error", true);
+      const w =
+        "Looks like OTEL_EXPORTER_OTLP_ENDPOINT isn't set up. That means we will send to a local collector.";
+      s.setAttribute("app.warning", w);
       s.end();
-      throw e;
+      return;
     }
     const authData = await fetchAuthorization(apiKey);
     if (!authData) {

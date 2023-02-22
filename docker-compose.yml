@@ -6,7 +6,7 @@ services:
       - "16686:16686"
       - "14250:14250"
     environment:
-      - LOG_LEVEL=debug
+      - LOG_LEVEL=info
 
   otel-collector:
     image: otel/opentelemetry-collector
