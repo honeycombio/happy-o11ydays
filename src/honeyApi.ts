@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import otel, { SpanStatus } from "@opentelemetry/api";
+import otel from "@opentelemetry/api";
 
 const tracer = otel.trace.getTracer("honeyApi.ts");
 
@@ -35,6 +35,7 @@ export async function fetchAuthorization(
       })
       .catch((e) => e.response);
     if (resp.status !== 200) {
+      s.setAttribute("app.responseStatus", resp.status);
       console.log(
         "WARNING: Could not retrieve team/env data from APIKEY. " + resp.status
       );
@@ -101,13 +102,11 @@ export async function checkAuthorization() {
       s.end();
       return;
     }
-    if (!process.env["OTEL_EXPORTER_OTLP_ENDPOINT"]) {
-      const w =
-        "Looks like OTEL_EXPORTER_OTLP_ENDPOINT isn't set up. That means we will send to a local collector.";
-      s.setAttribute("app.warning", w);
-      s.end();
-      return;
-    }
+    const otlp_endpoint = process.env["OTEL_EXPORTER_OTLP_ENDPOINT"];
+    s.setAttribute(
+      "app.otel_exporter_otlp_endpoint",
+      otlp_endpoint || "default to local collector"
+    );
     const authData = await fetchAuthorization(apiKey);
     if (!authData) {
       const e = new Error(
