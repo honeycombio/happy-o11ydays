@@ -7,8 +7,12 @@ const tracer = otel.trace.getTracer("image.ts");
 function readPng(location: string): PNGWithMetadata {
   return tracer.startActiveSpan("readPng", (s) => {
     s.setAttribute("app.fileLocation", location);
-    var data = fs.readFileSync(location);
-    const result = PNG.sync.read(data);
+
+    var fileData = fs.readFileSync(location);
+    const result = PNG.sync.read(fileData);
+
+    const { data, ...interestingAttributes } = result; // don't send the data; do send the other stuff
+    s.setAttribute("app.imageAttribute", JSON.stringify(interestingAttributes));
     s.end();
     return result;
   });
