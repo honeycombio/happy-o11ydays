@@ -1,5 +1,9 @@
 import axios from "axios";
 
+import otel from "@opentelemetry/api";
+
+const tracer = otel.trace.getTracer("honeyApi.ts");
+
 export type AuthResponse = {
   api_key_access: {
     events: boolean;
@@ -23,20 +27,23 @@ export type AuthResponse = {
 export async function fetchAuthorization(
   apiKey: string
 ): Promise<AuthResponse | undefined> {
-  const resp = await axios
-    .get<AuthResponse>("https://api.honeycomb.io/1/auth", {
-      responseType: "json",
-      headers: { "X-Honeycomb-Team": apiKey },
-    })
-    .catch((e) => e.response);
-  if (resp.status !== 200) {
-    console.log(
-      "WARNING: Could not retrieve team/env data from APIKEY. " + resp.status
-    );
-    return undefined;
-  }
+  return tracer.startActiveSpan("fetch authorization", async (s) => {
+    const resp = await axios
+      .get<AuthResponse>("https://api.honeycomb.io/1/auth", {
+        responseType: "json",
+        headers: { "X-Honeycomb-Team": apiKey },
+      })
+      .catch((e) => e.response);
+    if (resp.status !== 200) {
+      console.log(
+        "WARNING: Could not retrieve team/env data from APIKEY. " + resp.status
+      );
+      return undefined;
+    }
 
-  return resp.data;
+    s.end();
+    return resp.data;
+  });
 }
 
 export function fetchConfiguration() {
