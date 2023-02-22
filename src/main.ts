@@ -53,12 +53,13 @@ type SpanSpec = HeatmapSpanSpec &
   Record<string, number | string | boolean>;
 
 function planSpans(pixels: Pixels): SpanSpec[] {
-  const heatmapSpanSpecs = convertPixelsToSpans(pixels);
-
-  const graphSpanSpecs = addStackedGraphAttributes(heatmapSpanSpecs);
-  const spanSpecs = buildPicturesInWaterfall(graphSpanSpecs);
-
-  return spanSpecs;
+  return tracer.startActiveSpan("planSpans", (s) => {
+    const heatmapSpanSpecs = convertPixelsToSpans(pixels);
+    const graphSpanSpecs = addStackedGraphAttributes(heatmapSpanSpecs);
+    const spanSpecs = buildPicturesInWaterfall(graphSpanSpecs);
+    s.end();
+    return spanSpecs;
+  });
 }
 
 type TraceID = string;
@@ -138,7 +139,8 @@ const traceThisProgram = otel.trace.getTracer("main.js");
 sdk
   .start()
   .then(() =>
-    traceThisProgram.startActiveSpan("main", (span) => 
-      main(rootContext, imageFile).then(() => span.end()))
+    traceThisProgram.startActiveSpan("main", (span) =>
+      main(rootContext, imageFile).then(() => span.end())
+    )
   )
   .then(() => sdk.shutdown());
