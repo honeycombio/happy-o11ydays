@@ -98,7 +98,7 @@ export async function checkAuthorization(apiKey: string) {
       s.setStatus({ code: 3, message: e.message });
       s.setAttribute("error", true);
       s.end();
-      throw e;
+      return { status: "Invalid HONEYCOMB_API_KEY" };
     }
     if (!authData?.api_key_access.createDatasets) {
       const warning =

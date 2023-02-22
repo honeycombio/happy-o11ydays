@@ -20,9 +20,10 @@ export async function initializeDatasetInHoneycomb() {
         s.end();
         return { status: "No Honeycomb API Key" };
       }
-      await checkAuthorization(apiKey);
+      const authCheckResult = await checkAuthorization(apiKey);
       await initializeDataset();
       s.end();
+      return authCheckResult; // so far
     }
   );
 }
