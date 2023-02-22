@@ -1,10 +1,33 @@
 import axios from "axios";
-import { fetchAuthorization, fetchConfiguration } from "./honeyApi";
+import {
+  checkAuthorization,
+  fetchAuthorization,
+  fetchConfiguration,
+} from "./honeyApi";
 import otel from "@opentelemetry/api";
 
 const tracer = otel.trace.getTracer("dataset.ts");
 
-export async function initializeDataset() {
+// This function first gathers a lot of information,
+// then creates a dataset with a cute name if appropriate.
+export async function initializeDatasetInHoneycomb() {
+  return tracer.startActiveSpan(
+    "initialize dataset in honeycomb",
+    async (s) => {
+      const { apiKey, dataset } = fetchConfiguration();
+      if (!apiKey) {
+        s.setAttribute("app.honeycombApiKey", "undefined");
+        s.end();
+        return { status: "No Honeycomb API Key" };
+      }
+      await checkAuthorization(apiKey);
+      await initializeDataset();
+      s.end();
+    }
+  );
+}
+
+async function initializeDataset() {
   return tracer.startActiveSpan("initialize dataset", async (s) => {
     const { dataset, apiKey } = fetchConfiguration();
     s.setAttribute("app.dataset", dataset || "no dataset defined");

@@ -12,7 +12,7 @@ import {
   convertPixelsToSpans,
 } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
-import { initializeDataset } from "./dataset";
+import { initializeDatasetInHoneycomb } from "./dataset";
 import { buildPicturesInWaterfall, TraceSpanSpec } from "./waterfall";
 
 const greeting = ` _________________ 
@@ -26,8 +26,7 @@ const greeting = ` _________________
 `;
 
 async function main(rootContext: Context, imageFile: string) {
-  await checkAuthorization();
-  await initializeDataset();
+  const hnyInfo = await initializeDatasetInHoneycomb();
 
   console.log(greeting);
 

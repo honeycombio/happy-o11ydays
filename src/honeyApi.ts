@@ -36,8 +36,10 @@ export async function fetchAuthorization(
       .catch((e) => e.response);
     if (resp.status !== 200) {
       s.setAttribute("app.responseStatus", resp.status);
+      s.setAttribute("error", true);
       console.log(
-        "WARNING: Could not retrieve team/env data from APIKEY. " + resp.status
+        "WARNING: Could not retrieve team/env data from HONEYCOMB_API_KEY. " +
+          resp.status
       );
       return undefined;
     }
@@ -50,19 +52,9 @@ export async function fetchAuthorization(
 export function fetchConfiguration() {
   return tracer.startActiveSpan("fetch configuration from env", (s) => {
     const apiKey = process.env["HONEYCOMB_API_KEY"];
-    if (!apiKey) {
-      s.setAttribute("app.warning", "api key not defined");
-      console.log(
-        "Warning: HONEYCOMB_API_KEY not defined, so I can't give you a link"
-      );
-    }
+    s.setAttribute("app.apiKeyLength", apiKey?.length || 0);
     const dataset = process.env["OTEL_SERVICE_NAME"];
-    if (!dataset) {
-      s.setAttribute("app.warning", "service not defined");
-      console.log(
-        "Warning: OTEL_SERVICE_NAME not defined, so I can't link you to your dataset"
-      );
-    }
+    s.setAttribute("app.dataset", dataset || "service not defined");
     s.end();
     return {
       dataset,
@@ -90,18 +82,8 @@ export async function findLinkToDataset(
   return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}`;
 }
 
-export async function checkAuthorization() {
+export async function checkAuthorization(apiKey: string) {
   return tracer.startActiveSpan("check authorization", async (s) => {
-    const { apiKey } = fetchConfiguration();
-    if (apiKey === undefined) {
-      const w =
-        "hmm, no HONEYCOMB_API_KEY. For full functionality, get one, and run this with './run' it'll set you up better";
-      s.setStatus({ code: 1, message: w });
-      s.setAttribute("error", true);
-      s.setAttribute("app.warning", w);
-      s.end();
-      return;
-    }
     const otlp_endpoint = process.env["OTEL_EXPORTER_OTLP_ENDPOINT"];
     s.setAttribute(
       "app.otel_exporter_otlp_endpoint",
