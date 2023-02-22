@@ -1,0 +1,21 @@
+version: "3.7"
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "4319:4317"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - LOG_LEVEL=debug
+
+  otel-collector:
+    image: otel/opentelemetry-collector
+    command: [--config=/etc/otel-collector-config.yaml]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - 4317:4317 # OTLP gRPC receiver
+      - 4318:4318 # OTLP http receiver
+    environment:
+      - HONEYCOMB_API_KEY

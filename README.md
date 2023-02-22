@@ -220,3 +220,18 @@ and then run this program like
 `./run path/to/your-image.png`
 
 Now go do the HEATMAP(height) and see what it looks like. Tweet a screenshot at @honeycombio please!
+
+## Jaeger
+
+Running [Jaeger locally for OpenTelemetry](https://medium.com/jaegertracing/introducing-native-support-for-opentelemetry-in-jaeger-eb661be8183c):
+
+```
+docker run --name jaeger \
+  -e COLLECTOR_OTLP_ENABLED=true \
+  -p 16686:16686 \
+  -p 4317:4317 \
+  -p 4318:4318 \
+  jaegertracing/all-in-one:1.35
+```
+
+then hit [http://localhost:16686/search]()
