@@ -1,5 +1,8 @@
 import { populateAttributes } from "./bubbleUp";
 import { Pixel, Pixels } from "./image";
+import otel from "@opentelemetry/api";
+
+const tracer = otel.trace.getTracer("heatmap.ts");
 
 /**
  * Draw an image using spans on a heatmap.
@@ -30,28 +33,34 @@ type RowInPng = number; // distance from the top of the png, in pixels. Int
 type HeatmapHeight = number; // the height we should heatmap on. float. NEVER a whole number
 
 export function convertPixelsToSpans(pixels: Pixels) {
-  const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
+  return tracer.startActiveSpan("convert pixels to spans", (s) => {
+    const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
 
-  const spansForColor = approximateColorByNumberOfSpans(visiblePixels);
-  const heatmapHeight = placeVerticallyInBuckets(visiblePixels, pixels.height);
+    const spansForColor = approximateColorByNumberOfSpans(visiblePixels);
+    const heatmapHeight = placeVerticallyInBuckets(
+      visiblePixels,
+      pixels.height
+    );
 
-  // turn each pixel into some spans
-  const heatmapSpanSpecs = visiblePixels
-    .map((p) => {
-      const spans_at_once = spansForColor(p);
-      return Array(spans_at_once)
-        .fill({})
-        .map((_) => ({
-          ...p.asFlatJson(), // add all the fields, for observability ;-)
-          spans_at_once,
-          time_delta: p.location.x - pixels.width,
-          height: heatmapHeight(p.location.y), // make it noninteger, so hny knows this is a float field
-          ...populateAttributes(p), // for bubble up
-        }));
-    })
-    .flat();
+    // turn each pixel into some spans
+    const heatmapSpanSpecs = visiblePixels
+      .map((p) => {
+        const spans_at_once = spansForColor(p);
+        return Array(spans_at_once)
+          .fill({})
+          .map((_) => ({
+            ...p.asFlatJson(), // add all the fields, for observability ;-)
+            spans_at_once,
+            time_delta: p.location.x - pixels.width,
+            height: heatmapHeight(p.location.y), // make it noninteger, so hny knows this is a float field
+            ...populateAttributes(p), // for bubble up
+          }));
+      })
+      .flat();
 
-  return heatmapSpanSpecs;
+    s.end();
+    return heatmapSpanSpecs;
+  });
 }
 
 export function approximateColorByNumberOfSpans(
