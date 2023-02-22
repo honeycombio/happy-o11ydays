@@ -140,7 +140,13 @@ sdk
   .start()
   .then(() =>
     traceThisProgram.startActiveSpan("main", (span) =>
-      main(rootContext, imageFile).then(() => span.end())
+      main(rootContext, imageFile).then(
+        () => span.end(),
+        (e) => {
+          span.recordException(e);
+          span.end();
+        }
+      )
     )
   )
   .then(() => sdk.shutdown());
