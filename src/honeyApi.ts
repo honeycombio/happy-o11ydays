@@ -84,11 +84,6 @@ export async function checkAuthorization() {
       "hmm, no HONEYCOMB_API_KEY. If you run this with './run' it'll set you up better"
     );
   }
-  if (!process.env["OTEL_EXPORTER_OTLP_ENDPOINT"]) {
-    throw new Error(
-      "Looks like OTEL_EXPORTER_OTLP_ENDPOINT isn't set up. Please run this app with the ./run script"
-    );
-  }
   const authData = await fetchAuthorization(apiKey);
   if (!authData) {
     throw new Error(
