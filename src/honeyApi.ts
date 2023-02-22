@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import otel from "@opentelemetry/api";
+import otel, { SpanStatus } from "@opentelemetry/api";
 
 const tracer = otel.trace.getTracer("honeyApi.ts");
 
@@ -90,26 +90,46 @@ export async function findLinkToDataset(
 }
 
 export async function checkAuthorization() {
-  const { apiKey } = fetchConfiguration();
-  if (apiKey === undefined) {
-    throw new Error(
-      "hmm, no HONEYCOMB_API_KEY. If you run this with './run' it'll set you up better"
-    );
-  }
-  if (!process.env["OTEL_EXPORTER_OTLP_ENDPOINT"]) {
-    throw new Error(
-      "Looks like OTEL_EXPORTER_OTLP_ENDPOINT isn't set up. Please run this app with the ./run script"
-    );
-  }
-  const authData = await fetchAuthorization(apiKey);
-  if (!authData) {
-    throw new Error(
-      "Couldn't verify your API key with Honeycomb. Hmm, try pasting your HONEYCOMB_API_KEY into https://honeycomb-whoami.glitch.me to test it"
-    );
-  }
-  if (!authData?.api_key_access.createDatasets) {
-    console.log(
-      "WARNING: No create dataset permission... if this is the only API key you can get, then set OTEL_SERVICE_NAME to an existing dataset."
-    );
-  }
+  return tracer.startActiveSpan("check authorization", async (s) => {
+    const { apiKey } = fetchConfiguration();
+    if (apiKey === undefined) {
+      const e = new Error(
+        "hmm, no HONEYCOMB_API_KEY. If you run this with './run' it'll set you up better"
+      );
+      s.setStatus({ code: 1, message: e.message });
+      s.setAttribute("error", true);
+      s.recordException(e); // not that you'll ever see it
+      s.end();
+      throw e;
+    }
+    if (!process.env["OTEL_EXPORTER_OTLP_ENDPOINT"]) {
+      const e = new Error(
+        "Looks like OTEL_EXPORTER_OTLP_ENDPOINT isn't set up. Please run this app with the ./run script"
+      );
+      s.recordException(e); // not that you'll ever see it
+      s.setStatus({ code: 2, message: e.message });
+      s.setAttribute("error", true);
+      s.end();
+      throw e;
+    }
+    const authData = await fetchAuthorization(apiKey);
+    if (!authData) {
+      const e = new Error(
+        "Couldn't verify your API key with Honeycomb. Hmm, try pasting your HONEYCOMB_API_KEY into https://honeycomb-whoami.glitch.me to test it"
+      );
+      s.recordException(e); // you could see it if you also send to jaeger, or something
+      s.setStatus({ code: 3, message: e.message });
+      s.setAttribute("error", true);
+      s.end();
+      throw e;
+    }
+    if (!authData?.api_key_access.createDatasets) {
+      const warning =
+        "WARNING: No create dataset permission... if this is the only API key you can get, then set OTEL_SERVICE_NAME to an existing dataset.";
+      s.setAttribute("app.warning", warning);
+      console.log(warning);
+    }
+    s.end();
+    return;
+  });
 }
