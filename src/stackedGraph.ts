@@ -1,5 +1,8 @@
 import { Pixel, readImage } from "./image";
 import { default as stackKey } from "../input/stackKey.json";
+import otel from "@opentelemetry/api";
+
+const tracer = otel.trace.getTracer(__filename);
 
 function onlyUnique<T>(value: T, index: number, self: T[]): boolean {
   return self.indexOf(value) === index;
@@ -13,88 +16,92 @@ function objectMap<V, V2>(
 }
 
 function readSpecsFromImage(filename: string) {
-  const pixels = readImage(filename);
-  const visible = pixels.all().filter((p) => p.color.darkness() > 0);
+  return tracer.startActiveSpan("read specs from image", (s) => {
+    s.setAttribute("app.filename", filename);
+    const pixels = readImage(filename);
+    const visible = pixels.all().filter((p) => p.color.darkness() > 0);
 
-  // give me the top height of each color, in each column
-  type XLoc = number;
-  type ColorKey = string;
-  type YLoc = number;
-  type ColorsbyColumn = Record<XLoc, Record<ColorKey, YLoc>>;
-  const distanceFromBottom = function (p: Pixel) {
-    return pixels.height - p.location.y;
-  };
-  const colorsByColumn = visible.reduce((cbc, p) => {
-    const colorKey = p.color.toString();
-    if (!cbc[p.location.x]) {
-      // initialize
-      cbc[p.location.x] = {};
-    }
-    if (!cbc[p.location.x][colorKey]) {
-      // initialize
-      cbc[p.location.x][colorKey] = 0;
-    }
-    if (cbc[p.location.x][colorKey] < distanceFromBottom(p)) {
-      // compare
-      cbc[p.location.x][colorKey] = distanceFromBottom(p);
-    }
-    return cbc;
-  }, {} as ColorsbyColumn);
+    // give me the top height of each color, in each column
+    type XLoc = number;
+    type ColorKey = string;
+    type YLoc = number;
+    type ColorsbyColumn = Record<XLoc, Record<ColorKey, YLoc>>;
+    const distanceFromBottom = function (p: Pixel) {
+      return pixels.height - p.location.y;
+    };
+    const colorsByColumn = visible.reduce((cbc, p) => {
+      const colorKey = p.color.toString();
+      if (!cbc[p.location.x]) {
+        // initialize
+        cbc[p.location.x] = {};
+      }
+      if (!cbc[p.location.x][colorKey]) {
+        // initialize
+        cbc[p.location.x][colorKey] = 0;
+      }
+      if (cbc[p.location.x][colorKey] < distanceFromBottom(p)) {
+        // compare
+        cbc[p.location.x][colorKey] = distanceFromBottom(p);
+      }
+      return cbc;
+    }, {} as ColorsbyColumn);
 
-  // we want only the DIFFERENCE in height between colors, to make a stacked graph.
-  // this also gives us the colors and heights in order, bottom to top. That's important.
-  const colorAndHeightByColumn: Record<
-    XLoc,
-    Array<[ColorKey, YLoc]>
-  > = objectMap(colorsByColumn, (heightByColor) => {
-    const pairs: Array<[ColorKey, YLoc]> = Object.entries(heightByColor);
-    const ascendingHeight = pairs.sort((a, b) => a[1] - b[1]);
-    for (var i = ascendingHeight.length - 1; i > 0; i--) {
-      const heightOfThisColor = ascendingHeight[i][1];
-      const heightOfNextColorDown = ascendingHeight[i - 1][1];
-      const heightOfThisColorInAStackedGraph =
-        heightOfThisColor - heightOfNextColorDown;
-      ascendingHeight[i][1] = heightOfThisColorInAStackedGraph;
+    // we want only the DIFFERENCE in height between colors, to make a stacked graph.
+    // this also gives us the colors and heights in order, bottom to top. That's important.
+    const colorAndHeightByColumn: Record<
+      XLoc,
+      Array<[ColorKey, YLoc]>
+    > = objectMap(colorsByColumn, (heightByColor) => {
+      const pairs: Array<[ColorKey, YLoc]> = Object.entries(heightByColor);
+      const ascendingHeight = pairs.sort((a, b) => a[1] - b[1]);
+      for (var i = ascendingHeight.length - 1; i > 0; i--) {
+        const heightOfThisColor = ascendingHeight[i][1];
+        const heightOfNextColorDown = ascendingHeight[i - 1][1];
+        const heightOfThisColorInAStackedGraph =
+          heightOfThisColor - heightOfNextColorDown;
+        ascendingHeight[i][1] = heightOfThisColorInAStackedGraph;
+      }
+      return ascendingHeight;
+    });
+
+    // which colors need to be on the bottom? We need an ordering
+    const colorsInOrderPerColumn: ColorKey[][] = Object.values(
+      colorAndHeightByColumn
+    ).map((chs) => chs.map(([color, _height]) => color));
+    const orderOfColors: ColorKey[] = determineOrdering(colorsInOrderPerColumn);
+    function stackSort(color: ColorKey) {
+      return orderOfColors.indexOf(color);
     }
-    return ascendingHeight;
+
+    // Now put them in the format to be combined with SpanSpecs
+    const distanceFromRight = function (x: XLoc) {
+      return x - pixels.width;
+    };
+
+    function stackGroup(colorKey: ColorKey) {
+      const name =
+        stackKey.find((sk) => sk.colorKey === colorKey)?.stackGroup ||
+        "something";
+      const ordering = orderOfColors.indexOf(colorKey);
+      return `${ordering.toString(36)} + ${name}`;
+    }
+
+    const specs = Object.entries(colorAndHeightByColumn)
+      .map(([x, colorsAndHeights]) =>
+        colorsAndHeights.map(([colorKey, y]) => ({ x, y, colorKey }))
+      )
+      .flat()
+      .map((s) => ({
+        // this is the klugey bit, make its format match the spanSpec we have
+        // (no really, the rest of this program is CLEVER)
+        time_delta: distanceFromRight(parseInt(s.x)),
+        stackHeight: s.y,
+        stackGroup: stackGroup(s.colorKey),
+      }));
+
+    s.end();
+    return specs;
   });
-
-  // which colors need to be on the bottom? We need an ordering
-  const colorsInOrderPerColumn: ColorKey[][] = Object.values(
-    colorAndHeightByColumn
-  ).map((chs) => chs.map(([color, _height]) => color));
-  const orderOfColors: ColorKey[] = determineOrdering(colorsInOrderPerColumn);
-  function stackSort(color: ColorKey) {
-    return orderOfColors.indexOf(color);
-  }
-
-  // Now put them in the format to be combined with SpanSpecs
-  const distanceFromRight = function (x: XLoc) {
-    return x - pixels.width;
-  };
-
-  function stackGroup(colorKey: ColorKey) {
-    const name =
-      stackKey.find((sk) => sk.colorKey === colorKey)?.stackGroup ||
-      "something";
-    const ordering = orderOfColors.indexOf(colorKey);
-    return `${ordering.toString(36)} + ${name}`;
-  }
-
-  const specs = Object.entries(colorAndHeightByColumn)
-    .map(([x, colorsAndHeights]) =>
-      colorsAndHeights.map(([colorKey, y]) => ({ x, y, colorKey }))
-    )
-    .flat()
-    .map((s) => ({
-      // this is the klugey bit, make its format match the spanSpec we have
-      // (no really, the rest of this program is CLEVER)
-      time_delta: distanceFromRight(parseInt(s.x)),
-      stackHeight: s.y,
-      stackGroup: stackGroup(s.colorKey),
-    }));
-
-  return specs;
 }
 
 function groupByTimeDelta<T extends EnoughOfASpanSpec>(
@@ -112,36 +119,40 @@ function groupByTimeDelta<T extends EnoughOfASpanSpec>(
 
 type EnoughOfASpanSpec = { time_delta: number };
 type PossibleStackSpec = { stackHeight?: number; stackGroup?: string };
+
 export function addStackedGraphAttributes<T extends EnoughOfASpanSpec>(
   spanSpecs: T[]
 ): Array<T & PossibleStackSpec> {
-  var stackSpecCountByDelta = groupByTimeDelta(
-    readSpecsFromImage("input/house.png")
-  ); // the array reference won't be mutated but its contents will be
+  return tracer.startActiveSpan("add stacked graph attributes", (s) => {
+    var stackSpecCountByDelta = groupByTimeDelta(
+      readSpecsFromImage("input/house.png")
+    ); // the array reference won't be mutated but its contents will be
 
-  const withStackSpecs = spanSpecs.map((ss) => {
-    // do we have a need for a stack spec at this time?
-    const stackSpecForThisTime = stackSpecCountByDelta[ss.time_delta]?.pop();
-    if (stackSpecForThisTime) {
-      return { ...ss, ...stackSpecForThisTime };
-    } else {
-      return ss;
-    }
-  });
-
-  // warn if we missed any
-  Object.values(stackSpecCountByDelta)
-    .filter((ss) => ss.length > 0)
-    .forEach((missedSpecs) => {
-      console.log(
-        `WARNING: ${missedSpecs.length} stack spec at ${
-          missedSpecs[0].time_delta
-        } unused. You'll be missing a ${missedSpecs
-          .map((ss) => ss.stackGroup)
-          .join(" and a ")}`
-      );
+    const withStackSpecs = spanSpecs.map((ss) => {
+      // do we have a need for a stack spec at this time?
+      const stackSpecForThisTime = stackSpecCountByDelta[ss.time_delta]?.pop();
+      if (stackSpecForThisTime) {
+        return { ...ss, ...stackSpecForThisTime };
+      } else {
+        return ss;
+      }
     });
-  return withStackSpecs;
+
+    // warn if we missed any
+    Object.values(stackSpecCountByDelta)
+      .filter((ss) => ss.length > 0)
+      .forEach((missedSpecs) => {
+        console.log(
+          `WARNING: ${missedSpecs.length} stack spec at ${
+            missedSpecs[0].time_delta
+          } unused. You'll be missing a ${missedSpecs
+            .map((ss) => ss.stackGroup)
+            .join(" and a ")}`
+        );
+      });
+    s.end();
+    return withStackSpecs;
+  });
 }
 
 // given lists of colors in each column (in order from bottom to top), return a single list of colors in order.
