@@ -62,8 +62,8 @@ function planSpans(pixels: Pixels): SpanSpec[] {
 }
 
 type TraceID = string;
-const tracer = otel.trace.getTracer("viz-art");
 function sendSpans(rootContext: Context, spanSpecs: SpanSpec[]): TraceID {
+  const tracer = otel.trace.getTracer("viz-art");
   const begin: SecondsSinceEpoch = Math.ceil(Date.now() / 1000);
   var traceId: string;
   const earliestTimeDelta = Math.min(...spanSpecs.map((s) => s.time_delta));
