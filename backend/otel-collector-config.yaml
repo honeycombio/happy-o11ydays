@@ -8,8 +8,10 @@ processors:
   batch:
 
 exporters:
-  otlp/jaeger:
-    endpoint: jaeger:4319
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
   otlp/honeycomb:
     endpoint: "api.honeycomb.io:443"
     headers:
@@ -21,4 +23,4 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp/jaeger, otlp/honeycomb]
+      exporters: [jaeger, otlp/honeycomb]

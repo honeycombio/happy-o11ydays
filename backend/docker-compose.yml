@@ -4,9 +4,8 @@ services:
     image: jaegertracing/all-in-one:latest
     ports:
       - "16686:16686"
-      - "4319:4317"
+      - "14250:14250"
     environment:
-      - COLLECTOR_OTLP_ENABLED=true
       - LOG_LEVEL=debug
 
   otel-collector:
