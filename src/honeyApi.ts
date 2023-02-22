@@ -84,18 +84,16 @@ export async function findLinkToDataset(
 
 export async function checkAuthorization(apiKey: string) {
   return tracer.startActiveSpan("check authorization", async (s) => {
-    const otlp_endpoint = process.env["OTEL_EXPORTER_OTLP_ENDPOINT"];
     s.setAttribute(
       "app.otel_exporter_otlp_endpoint",
-      otlp_endpoint || "default to local collector"
+      process.env["OTEL_EXPORTER_OTLP_ENDPOINT"] || "default to local collector"
     );
     const authData = await fetchAuthorization(apiKey);
     if (!authData) {
-      const e = new Error(
-        "Couldn't verify your API key with Honeycomb. Hmm, try pasting your HONEYCOMB_API_KEY into https://honeycomb-whoami.glitch.me to test it"
-      );
-      s.recordException(e); // you could see it if you also send to jaeger, or something
-      s.setStatus({ code: 3, message: e.message });
+      const errorMessage =
+        "Couldn't verify your API key with Honeycomb. Hmm, try pasting your HONEYCOMB_API_KEY into https://honeycomb-whoami.glitch.me to test it";
+      s.recordException(new Error(errorMessage));
+      s.setStatus({ code: 3, message: errorMessage });
       s.setAttribute("error", true);
       s.end();
       return { status: "Invalid HONEYCOMB_API_KEY" };
