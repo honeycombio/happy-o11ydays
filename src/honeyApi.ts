@@ -47,22 +47,27 @@ export async function fetchAuthorization(
 }
 
 export function fetchConfiguration() {
-  const apiKey = process.env["HONEYCOMB_API_KEY"];
-  if (!apiKey) {
-    console.log(
-      "Warning: HONEYCOMB_API_KEY not defined, so I can't give you a link"
-    );
-  }
-  const dataset = process.env["OTEL_SERVICE_NAME"];
-  if (!dataset) {
-    console.log(
-      "Warning: OTEL_SERVICE_NAME not defined, so I can't link you to your dataset"
-    );
-  }
-  return {
-    dataset,
-    apiKey,
-  };
+  return tracer.startActiveSpan("fetch configuration from env", (s) => {
+    const apiKey = process.env["HONEYCOMB_API_KEY"];
+    if (!apiKey) {
+      s.setAttribute("app.warning", "api key not defined");
+      console.log(
+        "Warning: HONEYCOMB_API_KEY not defined, so I can't give you a link"
+      );
+    }
+    const dataset = process.env["OTEL_SERVICE_NAME"];
+    if (!dataset) {
+      s.setAttribute("app.warning", "service not defined");
+      console.log(
+        "Warning: OTEL_SERVICE_NAME not defined, so I can't link you to your dataset"
+      );
+    }
+    s.end();
+    return {
+      dataset,
+      apiKey,
+    };
+  });
 }
 
 export async function findLinkToDataset(
