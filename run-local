@@ -1,0 +1,24 @@
+#!/bin/bash
+
+## Send spans to a local collector
+
+echo "** sending spans to a local collector **"
+
+echo "  You can start up a collector AND jaeger by running 'docker compose up'"
+echo "  Your local jaeger will be at http://localhost:16686"
+
+echo "****"
+
+if [[ ! -d node_modules ]]; then
+  npm install
+fi
+
+if [[ -e .env ]]; then
+  source .env
+fi
+
+export OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-happy-o11ydays}
+export OTEL_SPAN_EVENT_COUNT_LIMIT=4000 # super necessary
+
+# I want "npm start" to run this script
+npm run activate $*
