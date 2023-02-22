@@ -41,9 +41,9 @@ export async function fetchAuthorization(
         "WARNING: Could not retrieve team/env data from HONEYCOMB_API_KEY. " +
           resp.status
       );
+      s.end();
       return undefined;
     }
-
     s.end();
     return resp.data;
   });
