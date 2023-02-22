@@ -35,6 +35,10 @@ type HeatmapHeight = number; // the height we should heatmap on. float. NEVER a 
 export function convertPixelsToSpans(pixels: Pixels) {
   return tracer.startActiveSpan("convert pixels to spans", (s) => {
     const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
+    s.setAttribute("app.pixels.count", pixels.all().length);
+    s.setAttribute("app.pixels.height", pixels.height);
+    s.setAttribute("app.pixels.width", pixels.width);
+    s.setAttribute("app.pixels.visibleCount", visiblePixels.length);
 
     const spansForColor = approximateColorByNumberOfSpans(visiblePixels);
     const heatmapHeight = placeVerticallyInBuckets(
