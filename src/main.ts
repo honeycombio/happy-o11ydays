@@ -140,7 +140,9 @@ sdk
   .start()
   .then(() =>
     tracer.startActiveSpan("main", (s) =>
-      main(rootContext, imageFile).then(
+      main(rootContext, imageFile)
+      .then(() => console.log(`Trace in jaeger: http://localhost:16686/trace/${s.spanContext().traceId}`))
+      .then(
         () => s.end(),
         (e) => {
           s.recordException(e);
