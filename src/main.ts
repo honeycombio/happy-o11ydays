@@ -142,6 +142,7 @@ sdk
     tracer.startActiveSpan("main", (s) =>
       main(rootContext, imageFile)
       .then(() => console.log(`Trace in jaeger: http://localhost:16686/trace/${s.spanContext().traceId}`))
+      .then(() => console.log(`Trace in honeycomb:https://ui.honeycomb.io/modernity/environments/spotcon/datasets/happy-o11ydays/trace?trace_id=${s.spanContext().traceId}`))
       .then(
         () => s.end(),
         (e) => {
