@@ -32,19 +32,16 @@ async function main(rootContext: Context, imageFile: string) {
   console.log(greeting);
 
   const pixels = readImage(imageFile);
-  console.log(`Read ${pixels.width}x${pixels.height} image from ${imageFile}`);
 
   const spanSpecs = planSpans(pixels);
-  console.log(`Sending ${spanSpecs.length} spans...`);
 
   const traceId = sendSpans(rootContext, spanSpecs);
-  console.log("We did it! The trace ID is: " + traceId);
 
   const link = await findLinkToDataset(traceId);
-  console.log("Run a new query for HEATMAP(height) in this dataset: " + link);
+  console.log("  Run a new query for HEATMAP(height) in this dataset: " + link);
 
   console.log(
-    "Check the README for how to get the query just right, and see the picture, and then investigate it!"
+    "  Check the README for how to get the query just right, and see the picture, and then investigate it!\n"
   );
 }
 
