@@ -1,13 +1,9 @@
 #!/bin/bash
 
 ## Send spans to a local collector
+#  You can start up a collector AND jaeger by running 'docker compose up'
+#  Your local jaeger will be at http://localhost:16686
 
-echo "** sending spans to a local collector **"
-
-echo "  You can start up a collector AND jaeger by running 'docker compose up'"
-echo "  Your local jaeger will be at http://localhost:16686"
-
-echo "****"
 
 if [[ ! -d node_modules ]]; then
   npm install
