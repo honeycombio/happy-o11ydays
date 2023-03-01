@@ -181,9 +181,7 @@ function buildOnePicture<T extends HasTimeDelta>(
 
     return [
       {
-        imageSpans: waterfallImageSpecs3.map((s) => ({
-          ...s,
-        })),
+        imageSpans: waterfallImageSpecs3,
         rest: availableSpans,
       },
       null,
