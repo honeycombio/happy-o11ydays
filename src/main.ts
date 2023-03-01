@@ -176,6 +176,7 @@ sdk
           (e) => {
             s.recordException(e);
             s.end();
+            throw e;
           }
         )
     )
