@@ -1,4 +1,4 @@
-import { sdk } from "./tracing";
+import { sdk } from "./initialize-tracing";
 import { Pixels, readImage } from "./image";
 
 import otel, { Context, Span } from "@opentelemetry/api";
