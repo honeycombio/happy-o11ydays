@@ -39,18 +39,20 @@ const nothingSpecialOnTheWaterfall = {
  * Represent a sparkle with any amount of red.
  */
 type ImageSource = { filename: string };
-const IMAGE_SOURCES = [
-  Array(10).fill(readWaterfallImageDescription("input/bigger-tree.png")),
-  Array(1).fill(readWaterfallImageDescription("input/tiny-tree.png")),
-  Array(1).fill(readWaterfallImageDescription("input/bee.png")),
-  Array(20).fill(readWaterfallImageDescription("input/ornament.png")),
-].flat();
+function fetchImageSources() {
+  return [
+    Array(10).fill(readWaterfallImageDescription("input/bigger-tree.png")),
+    Array(1).fill(readWaterfallImageDescription("input/tiny-tree.png")),
+    Array(1).fill(readWaterfallImageDescription("input/bee.png")),
+    Array(20).fill(readWaterfallImageDescription("input/ornament.png")),
+  ].flat();
+}
 
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
   const result = reduceUntilStop(
-    IMAGE_SOURCES,
+    fetchImageSources(),
     (resultsSoFar, img, i) => {
       const [newResult, err] = buildOnePicture(resultsSoFar.rest, img);
       if (err) {
