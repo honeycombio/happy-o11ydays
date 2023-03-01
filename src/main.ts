@@ -68,7 +68,7 @@ function sendSpans(rootContext: Context, spanSpecs: SpanSpec[]): SpanContext {
   // the root span has no height, so it doesn't appear in the heatmap
   return tracer.startActiveSpan(
     "🎼",
-    { startTime: placeHorizontallyInBucket(begin, earliestTimeDelta, 0) },
+    { startTime: placeHorizontallyInBucket(begin, earliestTimeDelta, 0), links: [{ attributes: {"why": "run that created me"}, context: otel.trace.getActiveSpan()!.spanContext() }] },
     rootContext,
     (rootSpan) => {
       // create all the spans for the picture
