@@ -5,6 +5,7 @@ import { HeatmapConfig } from "./heatmap";
 import { StackedGraphConfig } from "./stackedGraph";
 import { WaterfallConfig } from "./waterfall";
 import { spaninate } from "./tracing";
+import fs from "fs";
 
 export const HappyO11ydaysConfig: WaterfallConfig = {
   waterfallImages: [
@@ -36,5 +37,14 @@ export function readConfiguration(filename: string): InternalConfig {
       stackedGraph: HappyO11ydaysSGConfig,
       waterfall: HappyO11ydaysConfig,
     };
+  });
+}
+
+function readJson(filename: string) {
+  return spaninate("read json", (s) => {
+    s.setAttribute("app.filename", filename);
+    const data = fs.readFileSync(filename, { encoding: "utf8" });
+    s.setAttribute("app.fileContent", data);
+    return JSON.parse(data);
   });
 }

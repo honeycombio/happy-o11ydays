@@ -35,7 +35,7 @@ async function main(rootContext: Context, imageFile: string) {
 
   spaninate("greet", () => console.log(greeting));
 
-  const config = readConfiguration(imageFile)
+  const config = readConfiguration(imageFile);
 
   const spanSpecs = spaninate("plan spans", () => planSpans(config));
 
@@ -150,7 +150,7 @@ const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {
 
 const tracer = otel.trace.getTracer("main.ts");
 
-const imageFile = process.argv[2] || "input/dontpeek.png";
+const imageFile = process.argv[2] || "input/happyO11ydays.json";
 const rootContext = otel.context.active();
 sdk
   .start()
