@@ -51,10 +51,10 @@ type SpanSpec = HeatmapSpanSpec &
   Record<string, number | string | boolean>;
 
 function planSpans(pixels: Pixels): SpanSpec[] {
-  const heatmapSpanSpecs = convertPixelsToSpans(pixels);
+  const heatmapSpanSpecs = spaninate("convert pixels to spans", () => convertPixelsToSpans(pixels));
 
-  const graphSpanSpecs = addStackedGraphAttributes(heatmapSpanSpecs);
-  const spanSpecs = buildPicturesInWaterfall(graphSpanSpecs);
+  const graphSpanSpecs = spaninate("add stacked graph attributes", () => addStackedGraphAttributes(heatmapSpanSpecs));
+  const spanSpecs = spaninate("build pictures in waterfall", () => buildPicturesInWaterfall(graphSpanSpecs));
 
   return spanSpecs;
 }
