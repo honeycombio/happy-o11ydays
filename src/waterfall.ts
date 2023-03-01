@@ -145,48 +145,40 @@ function buildOnePicture<T extends HasTimeDelta>(
   spans: T[],
   waterfallImageDescription: WaterfallImageDescription
 ): BuildOnePictureOutcome<T> {
-  return spaninate("build one picture", (s) => {
-    s.setAttributes({
-      "app.waterfallImageDescription": JSON.stringify(
-        waterfallImageDescription
-      ),
-    });
+  const maxIncrement = maxIncrementThatMightStillFit(
+    spans,
+    waterfallImageDescription
+  );
+  const possibleIncrements = range(0, maxIncrement + 1);
+  shuffleArray(possibleIncrements);
+  const finalFitResult: "fail" | FoundASpot<T> = findResult(
+    possibleIncrements,
+    (incrementFromTheLeft) =>
+      findASpot(spans, waterfallImageDescription, incrementFromTheLeft++)
+  );
 
-    const maxIncrement = maxIncrementThatMightStillFit(
-      spans,
-      waterfallImageDescription
-    );
-    const possibleIncrements = range(0, maxIncrement + 1);
-    shuffleArray(possibleIncrements);
-    const finalFitResult: "fail" | FoundASpot<T> = findResult(
-      possibleIncrements,
-      (incrementFromTheLeft) =>
-        findASpot(spans, waterfallImageDescription, incrementFromTheLeft++)
-    );
-
-    if (finalFitResult === "fail") {
-      // we are done putting images in there
-      return [
-        { imageSpans: [], rest: spans },
-        "Give up, there's no way this is gonna fit",
-      ];
-    }
-
-    const { waterfallImageSpans, availableSpans } = finalFitResult;
-    // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
-
-    const waterfallImageSpecs3 = determineTreeStructure(
-      waterfallImageSpans
-    ) as Array<T & TraceSpanSpec>; // dammit typescript, i have spent too much time fighting you
-
+  if (finalFitResult === "fail") {
+    // we are done putting images in there
     return [
-      {
-        imageSpans: waterfallImageSpecs3,
-        rest: availableSpans,
-      },
-      null,
+      { imageSpans: [], rest: spans },
+      "Give up, there's no way this is gonna fit",
     ];
-  });
+  }
+
+  const { waterfallImageSpans, availableSpans } = finalFitResult;
+  // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
+
+  const waterfallImageSpecs3 = determineTreeStructure(
+    waterfallImageSpans
+  ) as Array<T & TraceSpanSpec>; // dammit typescript, i have spent too much time fighting you
+
+  return [
+    {
+      imageSpans: waterfallImageSpecs3,
+      rest: availableSpans,
+    },
+    null,
+  ];
 }
 
 function maxIncrementThatMightStillFit(
