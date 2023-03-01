@@ -26,7 +26,15 @@ const greeting = ` _________________
 `;
 
 async function main(rootContext: Context, imageFile: string) {
-  await checkAuthorization();
+  tracer.startActiveSpan("check authorization", async (s) => {
+    try {
+      await checkAuthorization();
+    } catch (e) {
+      s.recordException(e as Error);
+    } finally {
+      s.end();
+    }
+  });
   await initializeDataset();
 
   console.log(greeting);
