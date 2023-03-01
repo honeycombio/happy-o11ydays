@@ -27,6 +27,8 @@ const greeting = ` _________________
 `;
 
 async function main(rootContext: Context, imageFile: string) {
+  const config = readConfiguration(imageFile);
+
   const authData = await spaninateAsync(
     "check authorization",
     checkAuthorization
@@ -34,8 +36,6 @@ async function main(rootContext: Context, imageFile: string) {
   await spaninateAsync("init dataset", initializeDataset);
 
   spaninate("greet", () => console.log(greeting));
-
-  const config = readConfiguration(imageFile);
 
   const spanSpecs = spaninate("plan spans", () => planSpans(config));
 
