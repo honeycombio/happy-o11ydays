@@ -42,17 +42,7 @@ export type WaterfallConfig = {
   waterfallImages: ImageSource[];
   song: SongConfig;
 };
-export const HappyO11ydaysConfig: WaterfallConfig = {
-  waterfallImages: [
-    { filename: "input/bigger-tree.png", maxCount: 10 },
-    { filename: "input/tiny-tree.png", maxCount: 1 },
-    { filename: "input/bee.png", maxCount: 1 },
-    { filename: "input/ornament.png", maxCount: 20 },
-  ],
-  song: {
-    lyricsFile: "input/song.txt",
-  },
-};
+
 type ImageSource = { filename: string; maxCount: number };
 function fetchImageSources(config: ImageSource[]): WaterfallImageDescription[] {
   return config

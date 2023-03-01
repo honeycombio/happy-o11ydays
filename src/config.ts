@@ -3,7 +3,19 @@ import { readImage } from "./image";
 import { default as rednessJson } from "../input/redkey.json";
 import { HeatmapConfig } from "./heatmap";
 import { HappyO11ydaysSGConfig, StackedGraphConfig } from "./stackedGraph";
-import { HappyO11ydaysConfig, WaterfallConfig } from "./waterfall";
+import { WaterfallConfig } from "./waterfall";
+
+export const HappyO11ydaysConfig: WaterfallConfig = {
+  waterfallImages: [
+    { filename: "input/bigger-tree.png", maxCount: 10 },
+    { filename: "input/tiny-tree.png", maxCount: 1 },
+    { filename: "input/bee.png", maxCount: 1 },
+    { filename: "input/ornament.png", maxCount: 20 },
+  ],
+  song: {
+    lyricsFile: "input/song.txt",
+  },
+};
 
 export type InternalConfig = {
   heatmap: HeatmapConfig;
