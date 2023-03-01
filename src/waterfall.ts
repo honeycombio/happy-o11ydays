@@ -40,6 +40,7 @@ const nothingSpecialOnTheWaterfall = {
  */
 type WaterfallConfiguration = {
   waterfallImages: ImageSource[];
+  song: SongConfig;
 };
 export const HappyO11ydaysConfig: WaterfallConfiguration = {
   waterfallImages: [
@@ -48,6 +49,9 @@ export const HappyO11ydaysConfig: WaterfallConfiguration = {
     { filename: "input/bee.png", maxCount: 1 },
     { filename: "input/ornament.png", maxCount: 20 },
   ],
+  song: {
+    lyricsFile: "input/song.txt",
+  },
 };
 type ImageSource = { filename: string; maxCount: number };
 function fetchImageSources(config: ImageSource[]): WaterfallImageDescription[] {
@@ -81,7 +85,7 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   );
 
   shuffleRoots(result.imageSpans); // mutates
-  const imageSpans = assignNames(result.imageSpans);
+  const imageSpans = assignNames(config.song, result.imageSpans);
   const leftoversAsSpanEvents = result.rest.map((s) => ({
     ...s,
     ...nothingSpecialOnTheWaterfall,
@@ -90,14 +94,16 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   return [...leftoversAsSpanEvents, ...imageSpans];
 }
 
+type SongConfig = { lyricsFile: string };
 function assignNames<T extends HasTimeDelta & TraceSpanSpec>(
+  config: SongConfig,
   images: T[][]
 ): T[] {
   function byRootStartTime(a: T[], b: T[]) {
     return a[0].time_delta - b[0].time_delta;
   }
   images.sort(byRootStartTime);
-  const song = new SpanSong("input/song.txt");
+  const song = new SpanSong(config.lyricsFile);
   images.forEach((im, i1) => {
     im.forEach((s, i2) => {
       if (!s.spanEvent) {
