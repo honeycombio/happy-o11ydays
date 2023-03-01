@@ -73,8 +73,8 @@ export async function findLinkToDataset(
   }
   const datasetPortion = dataset ? `/datasets/${dataset}` : "";
 
-  //return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}/trace?trace_id=${traceId}`;
-  return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}`;
+  return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}/trace?trace_id=${traceId}`;
+  //return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}`;
 }
 
 export async function checkAuthorization() {

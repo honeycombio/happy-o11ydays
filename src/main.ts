@@ -43,6 +43,7 @@ async function main(rootContext: Context, imageFile: string) {
   console.log(
     "  Check the README for how to get the query just right, and see the picture, and then investigate it!\n"
   );
+  console.log("  Oh look, I drew a picture: " + url);
 }
 
 type SpanSpec = HeatmapSpanSpec &
