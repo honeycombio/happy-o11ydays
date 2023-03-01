@@ -4,6 +4,7 @@ import { default as rednessJson } from "../input/redkey.json";
 import { HeatmapConfig } from "./heatmap";
 import { StackedGraphConfig } from "./stackedGraph";
 import { WaterfallConfig } from "./waterfall";
+import { spaninate } from "./tracing";
 
 export const HappyO11ydaysConfig: WaterfallConfig = {
   waterfallImages: [
@@ -27,10 +28,13 @@ export type InternalConfig = {
   waterfall: WaterfallConfig;
 };
 export function readConfiguration(filename: string): InternalConfig {
-  const pixels = readImage(filename);
-  return {
-    heatmap: { attributesByRedness: rednessJson, pixels },
-    stackedGraph: HappyO11ydaysSGConfig,
-    waterfall: HappyO11ydaysConfig,
-  };
+  return spaninate("read configuration", (s) => {
+    s.setAttribute("app.configFile", filename);
+    const pixels = readImage(filename);
+    return {
+      heatmap: { attributesByRedness: rednessJson, pixels },
+      stackedGraph: HappyO11ydaysSGConfig,
+      waterfall: HappyO11ydaysConfig,
+    };
+  });
 }

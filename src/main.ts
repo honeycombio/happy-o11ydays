@@ -35,9 +35,7 @@ async function main(rootContext: Context, imageFile: string) {
 
   spaninate("greet", () => console.log(greeting));
 
-  const config = spaninate("read configuration", () =>
-    readConfiguration(imageFile)
-  );
+  const config = readConfiguration(imageFile)
 
   const spanSpecs = spaninate("plan spans", () => planSpans(config));
 
