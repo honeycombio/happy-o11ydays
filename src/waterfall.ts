@@ -1,6 +1,5 @@
 import { Pixel, Pixels, readImage } from "./image";
 import { SpanSong } from "./song";
-import { spaninate } from "./tracing";
 
 type HasTimeDelta = { time_delta: DistanceFromRight };
 export type FractionOfGranularity = number;
@@ -38,14 +37,19 @@ const nothingSpecialOnTheWaterfall = {
  * Represent the span with a color containing blue, but no red.
  * Represent a sparkle with any amount of red.
  */
-type ImageSource = { filename: string; maxCount: number };
-function fetchImageSources(): WaterfallImageDescription[] {
-  const config: ImageSource[] = [
+type WaterfallConfiguration = {
+  waterfallImages: ImageSource[];
+};
+export const HappyO11ydaysConfig: WaterfallConfiguration = {
+  waterfallImages: [
     { filename: "input/bigger-tree.png", maxCount: 10 },
     { filename: "input/tiny-tree.png", maxCount: 1 },
     { filename: "input/bee.png", maxCount: 1 },
     { filename: "input/ornament.png", maxCount: 20 },
-  ];
+  ],
+};
+type ImageSource = { filename: string; maxCount: number };
+function fetchImageSources(config: ImageSource[]): WaterfallImageDescription[] {
   return config
     .map(({ filename, maxCount }) =>
       Array(maxCount).fill(readWaterfallImageDescription(filename))
@@ -54,10 +58,11 @@ function fetchImageSources(): WaterfallImageDescription[] {
 }
 
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
+  config: WaterfallConfiguration,
   spans: T[]
 ): Array<T & TraceSpanSpec> {
   const result = reduceUntilStop(
-    fetchImageSources(),
+    fetchImageSources(config.waterfallImages),
     (resultsSoFar, img, i) => {
       const [newResult, err] = buildOnePicture(resultsSoFar.rest, img);
       if (err) {

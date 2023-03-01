@@ -13,7 +13,11 @@ import {
 } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
-import { buildPicturesInWaterfall, TraceSpanSpec } from "./waterfall";
+import {
+  buildPicturesInWaterfall,
+  HappyO11ydaysConfig,
+  TraceSpanSpec,
+} from "./waterfall";
 import { spaninate, spaninateAsync } from "./tracing";
 
 const greeting = ` _________________ 
@@ -65,7 +69,7 @@ function planSpans(pixels: Pixels): SpanSpec[] {
     addStackedGraphAttributes(heatmapSpanSpecs)
   );
   const spanSpecs = spaninate("build pictures in waterfall", () =>
-    buildPicturesInWaterfall(graphSpanSpecs)
+    buildPicturesInWaterfall(HappyO11ydaysConfig, graphSpanSpecs)
   );
 
   return spanSpecs;
