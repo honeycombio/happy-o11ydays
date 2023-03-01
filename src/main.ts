@@ -28,17 +28,17 @@ const greeting = ` _________________
 
 async function main(rootContext: Context, imageFile: string) {
   await spaninateAsync("check authorization", checkAuthorization);
-  await initializeDataset();
+  await spaninateAsync("init dataset", initializeDataset);
 
-  console.log(greeting);
+  spaninate("greet", () => console.log(greeting));
 
-  const pixels = readImage(imageFile);
+  const pixels = spaninate("read image", () => readImage(imageFile));
 
-  const spanSpecs = planSpans(pixels);
+  const spanSpecs = spaninate("plan spans", () => planSpans(pixels));
 
-  const traceId = sendSpans(rootContext, spanSpecs);
+  const traceId = spaninate("send spans", () => sendSpans(rootContext, spanSpecs));
 
-  const link = await findLinkToDataset(traceId);
+  const link = await spaninateAsync("find link to dataset", () => findLinkToDataset(traceId));
   console.log("  Run a new query for HEATMAP(height) in this dataset: " + link);
 
   console.log(
