@@ -1,11 +1,11 @@
-import otel from "@opentelemetry/api";
+import otel, { Span } from "@opentelemetry/api";
 
 const tracer = otel.trace.getTracer("paint-by-trace");
 
-export function spaninate<R>(name: string, cb: () => R): R {
+export function spaninate<R>(name: string, cb: (s: Span) => R): R {
   return tracer.startActiveSpan(name, (s) => {
     try {
-      return cb();
+      return cb(s);
     } catch (e) {
       s.recordException(e as Error);
       throw e;
@@ -15,10 +15,10 @@ export function spaninate<R>(name: string, cb: () => R): R {
   });
 }
 
-export function spaninateAsync<R>(name: string, cb: () => Promise<R>): Promise<R> {
+export function spaninateAsync<R>(name: string, cb: (s: Span) => Promise<R>): Promise<R> {
   return tracer.startActiveSpan(name,async (s) => {
     try {
-      return await cb();
+      return await cb(s);
     } catch (e) {
       s.recordException(e as Error);
       throw e;
