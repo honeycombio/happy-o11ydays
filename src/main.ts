@@ -1,7 +1,7 @@
 import { sdk } from "./initialize-tracing";
 import { Pixels, readImage } from "./image";
 
-import otel, { Context, Span } from "@opentelemetry/api";
+import otel, { Context, Span, SpanContext } from "@opentelemetry/api";
 import { checkAuthorization, findLinkToDataset } from "./honeyApi";
 import {
   placeHorizontallyInBucket,
@@ -58,8 +58,7 @@ function planSpans(pixels: Pixels): SpanSpec[] {
   return spanSpecs;
 }
 
-type TraceID = string;
-function sendSpans(rootContext: Context, spanSpecs: SpanSpec[]): TraceID {
+function sendSpans(rootContext: Context, spanSpecs: SpanSpec[]): SpanContext {
   const tracer = otel.trace.getTracer("viz-art");
   const begin: SecondsSinceEpoch = Math.ceil(Date.now() / 1000);
   var traceId: string;
@@ -106,10 +105,9 @@ function sendSpans(rootContext: Context, spanSpecs: SpanSpec[]): TraceID {
           );
         }
       });
-      traceId = rootSpan.spanContext().traceId;
       openSpan.end(openSpanEndTime);
       rootSpan.end();
-      return traceId;
+      return rootSpan.spanContext();
     }
   );
 }
