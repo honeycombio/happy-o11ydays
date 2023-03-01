@@ -2,6 +2,7 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
+import { FsInstrumentation } from "@opentelemetry/instrumentation-fs";
 
 const { DiagConsoleLogger, DiagLogLevel, diag } = require("@opentelemetry/api");
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
@@ -16,7 +17,7 @@ const sdk = new NodeSDK({
     maxQueueSize: 20000,
     maxExportBatchSize: 1000,
   }),
-  instrumentations: [new HttpInstrumentation()],
+  instrumentations: [new HttpInstrumentation(), new FsInstrumentation()],
 });
 
 export { sdk };
