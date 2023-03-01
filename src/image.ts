@@ -1,9 +1,13 @@
 import { PNG, PNGWithMetadata } from "pngjs";
 import fs from "fs";
+import { spaninate } from "./tracing";
 
 function readPng(location: string): PNGWithMetadata {
-  var data = fs.readFileSync(location);
-  return PNG.sync.read(data);
+  return spaninate("read png", (s) => {
+    s.setAttribute("app.filename", location);
+    var data = fs.readFileSync(location);
+    return PNG.sync.read(data);
+  });
 }
 
 function range(from: number, to: number): ReadonlyArray<number> {
