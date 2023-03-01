@@ -37,23 +37,19 @@ const nothingSpecialOnTheWaterfall = {
  * Represent the span with a color containing blue, but no red.
  * Represent a sparkle with any amount of red.
  */
-type ImageSource = { filename: string; waterfallImageName: string };
+type ImageSource = { filename: string; };
 const IMAGE_SOURCES = [
   Array(10).fill({
     filename: "input/bigger-tree.png",
-    waterfallImageName: "Christmas tree",
   }),
   Array(1).fill({
     filename: "input/tiny-tree.png",
-    waterfallImageName: "baby tree",
   }),
   Array(1).fill({
     filename: "input/bee.png",
-    waterfallImageName: "Christmas bee",
   }),
   Array(20).fill({
     filename: "input/ornament.png",
-    waterfallImageName: "ornament",
   }),
 ].flat();
 
@@ -138,7 +134,7 @@ type BuildOnePictureOutcome<T extends HasTimeDelta> = [
 ];
 function buildOnePicture<T extends HasTimeDelta>(
   spans: T[],
-  { filename, waterfallImageName }: ImageSource
+  { filename }: ImageSource
 ): BuildOnePictureOutcome<T> {
   const waterfallImageDescriptionWithRoot = [
     { start: 0, width: 0, waterfallColor: "none" }, // invent an early root span because I want this at the top of the trace
