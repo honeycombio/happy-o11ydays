@@ -38,14 +38,19 @@ const nothingSpecialOnTheWaterfall = {
  * Represent the span with a color containing blue, but no red.
  * Represent a sparkle with any amount of red.
  */
-type ImageSource = { filename: string };
-function fetchImageSources() {
-  return [
-    Array(10).fill(readWaterfallImageDescription("input/bigger-tree.png")),
-    Array(1).fill(readWaterfallImageDescription("input/tiny-tree.png")),
-    Array(1).fill(readWaterfallImageDescription("input/bee.png")),
-    Array(20).fill(readWaterfallImageDescription("input/ornament.png")),
-  ].flat();
+type ImageSource = { filename: string; maxCount: number };
+function fetchImageSources(): WaterfallImageDescription[] {
+  const config: ImageSource[] = [
+    { filename: "input/bigger-tree.png", maxCount: 10 },
+    { filename: "input/tiny-tree.png", maxCount: 1 },
+    { filename: "input/bee.png", maxCount: 1 },
+    { filename: "input/ornament.png", maxCount: 20 },
+  ];
+  return config
+    .map(({ filename, maxCount }) =>
+      Array(maxCount).fill(readWaterfallImageDescription(filename))
+    )
+    .flat();
 }
 
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
