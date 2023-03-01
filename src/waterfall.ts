@@ -141,6 +141,7 @@ function buildOnePicture<T extends HasTimeDelta>(
   { filename, waterfallImageName }: ImageSource
 ): BuildOnePictureOutcome<T> {
   return spaninate("build one picture", (s) => {
+    s.setAttributes({"app.imageName": waterfallImageName, "app.filename": filename});
     const waterfallImageDescriptionWithRoot = [
       { start: 0, width: 0, waterfallColor: "none" }, // invent an early root span because I want this at the top of the trace
       ...readImageData(filename),
