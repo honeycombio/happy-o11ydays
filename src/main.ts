@@ -59,13 +59,15 @@ async function main(rootContext: Context, imageFile: string) {
   console.log("  Oh look, I drew a picture: " + url + "\n");
 }
 
+import { default as rednessJson } from "../input/redkey.json";
+
 type SpanSpec = HeatmapSpanSpec &
   TraceSpanSpec &
   Record<string, number | string | boolean>;
 
 function planSpans(pixels: Pixels): SpanSpec[] {
   const heatmapSpanSpecs = spaninate("convert pixels to spans", () =>
-    convertPixelsToSpans(pixels)
+    convertPixelsToSpans({ attributesByRedness: rednessJson, pixels })
   );
 
   const graphSpanSpecs = spaninate("add stacked graph attributes", () => {

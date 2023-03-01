@@ -1,4 +1,4 @@
-import { populateAttributes } from "./bubbleUp";
+import { AttributesByRedness, populateAttributes } from "./bubbleUp";
 import { Pixel, Pixels } from "./image";
 
 /**
@@ -29,7 +29,11 @@ export type HeatmapSpanSpec = {
 type RowInPng = number; // distance from the top of the png, in pixels. Int
 type HeatmapHeight = number; // the height we should heatmap on. float. NEVER a whole number
 
-export function convertPixelsToSpans(pixels: Pixels) {
+export type HeatmapConfig = {
+  pixels: Pixels,
+  attributesByRedness: AttributesByRedness,
+}
+export function convertPixelsToSpans({ pixels, attributesByRedness}: HeatmapConfig) {
   const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
 
   const spansForColor = approximateColorByNumberOfSpans(visiblePixels);
@@ -46,7 +50,7 @@ export function convertPixelsToSpans(pixels: Pixels) {
           spans_at_once,
           time_delta: p.location.x - pixels.width,
           height: heatmapHeight(p.location.y), // make it noninteger, so hny knows this is a float field
-          ...populateAttributes(p), // for bubble up
+          ...populateAttributes(attributesByRedness, p), // for bubble up
         }));
     })
     .flat();
