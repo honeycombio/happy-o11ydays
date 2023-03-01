@@ -62,7 +62,7 @@ grep import src/*.ts | grep -v '"\.'
 npm i @opentelemetry/instrumentation-http
 ```
 
-in src/tracing.ts:
+in src/initialize-tracing.ts:
 
 ```
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
@@ -76,7 +76,7 @@ import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 npm i @opentelemetry/instrumentation-fs
 ```
 
-in src/tracing.ts:
+in src/initialize-tracing.ts:
 
 ```
 import { FsInstrumentation } from "@opentelemetry/instrumentation-fs";
