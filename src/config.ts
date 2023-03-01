@@ -2,7 +2,7 @@ import { readImage } from "./image";
 
 import { default as rednessJson } from "../input/redkey.json";
 import { HeatmapConfig } from "./heatmap";
-import { HappyO11ydaysSGConfig, StackedGraphConfig } from "./stackedGraph";
+import { StackedGraphConfig } from "./stackedGraph";
 import { WaterfallConfig } from "./waterfall";
 
 export const HappyO11ydaysConfig: WaterfallConfig = {
@@ -15,6 +15,10 @@ export const HappyO11ydaysConfig: WaterfallConfig = {
   song: {
     lyricsFile: "input/song.txt",
   },
+};
+
+export const HappyO11ydaysSGConfig = {
+  imageFilename: "input/house.png",
 };
 
 export type InternalConfig = {

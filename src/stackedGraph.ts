@@ -113,9 +113,6 @@ function groupByTimeDelta<T extends EnoughOfASpanSpec>(
 type EnoughOfASpanSpec = { time_delta: number };
 type PossibleStackSpec = { stackHeight?: number; stackGroup?: string };
 
-export const HappyO11ydaysSGConfig = {
-  imageFilename: "input/house.png",
-};
 export type StackedGraphConfig = {
   imageFilename: string;
 };
