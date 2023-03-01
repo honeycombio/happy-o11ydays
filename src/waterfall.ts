@@ -175,7 +175,7 @@ function buildOnePicture<T extends HasTimeDelta>(
 
   const waterfallImageSpecs3 = determineTreeStructure(
     waterfallImageSpans
-  ) as Array<T & TraceSpanSpec>; // fuck you typescript, i have spent too much time fighting you
+  ) as Array<T & TraceSpanSpec>; // dammit typescript, i have spent too much time fighting you
 
   return [
     {
