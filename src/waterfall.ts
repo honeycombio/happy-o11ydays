@@ -177,16 +177,14 @@ function buildOnePicture<T extends HasTimeDelta>(
     waterfallImageSpans
   ) as Array<T & TraceSpanSpec>; // dammit typescript, i have spent too much time fighting you
 
-  return [
-    {
-      imageSpans: waterfallImageSpecs3.map((s) => ({
-        ...s,
-        waterfallImageName,
-      })),
-      rest: availableSpans,
-    },
-    null,
-  ];
+    return [
+      {
+        imageSpans: waterfallImageSpecs3,
+        rest: availableSpans,
+      },
+      null,
+    ];
+  });
 }
 
 function maxIncrementThatMightStillFit(
