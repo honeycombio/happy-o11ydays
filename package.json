@@ -13,6 +13,8 @@
   "dependencies": {
     "@opentelemetry/api": "^1.4.0",
     "@opentelemetry/exporter-trace-otlp-proto": "^0.35.1",
+    "@opentelemetry/instrumentation-fs": "^0.7.0",
+    "@opentelemetry/instrumentation-http": "^0.35.1",
     "@opentelemetry/sdk-node": "^0.35.1",
     "@types/pngjs": "^6.0.1",
     "axios": "^1.2.0",
