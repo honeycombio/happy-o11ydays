@@ -22,6 +22,7 @@ type DistanceFromRight = number; // nonpositive integer
 type StartToTimeDelta = (start: number) => DistanceFromRight;
 type WidthToWaterfallWidth = (width: number) => FractionOfGranularity;
 
+// this is a special behavior for constructing the tree, that works for span events
 const nothingSpecialOnTheWaterfall = {
   waterfallWidth: 1,
   popBefore: 1,
@@ -81,14 +82,12 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
 
   shuffleRoots(result.imageSpans); // mutates
   const imageSpans = assignNames(result.imageSpans);
-  return [
-    ...result.rest.map((s) => ({
-      ...s,
-      ...nothingSpecialOnTheWaterfall,
-      name: "hello there",
-    })),
-    ...imageSpans,
-  ];
+  const leftoversAsSpanEvents = result.rest.map((s) => ({
+    ...s,
+    ...nothingSpecialOnTheWaterfall,
+    name: "hello there",
+  }));
+  return [...leftoversAsSpanEvents, ...imageSpans];
 }
 
 function assignNames<T extends HasTimeDelta & TraceSpanSpec>(
