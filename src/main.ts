@@ -49,7 +49,7 @@ async function main(rootContext: Context, imageFile: string) {
   const url = await spaninateAsync("find link to dataset", () =>
     findLinkToDataset(authData, sentSpanContext.traceId)
   );
-  console.log("  Oh look, I drew a picture: " + url);
+  console.log("  Oh look, I drew a picture: " + url + "\n");
 }
 
 type SpanSpec = HeatmapSpanSpec &
