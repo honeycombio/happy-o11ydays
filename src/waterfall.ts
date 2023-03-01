@@ -38,7 +38,7 @@ const nothingSpecialOnTheWaterfall = {
  * Represent the span with a color containing blue, but no red.
  * Represent a sparkle with any amount of red.
  */
-type ImageSource = { filename: string; };
+type ImageSource = { filename: string };
 const IMAGE_SOURCES = [
   Array(10).fill({
     filename: "input/bigger-tree.png",
@@ -128,6 +128,16 @@ function shuffleRoots<T extends HasTimeDelta>(
   imagesInWaterfall.forEach((imageRows, i) => (imageRows[0] = roots[i]));
 }
 
+type WaterfallImageDescription = WaterfallImageRow[];
+function readWaterfallImageDescription(
+  filename: string
+): WaterfallImageDescription {
+  return [
+    { start: 0, width: 0, waterfallColor: "none" }, // invent an early root span because I want this at the top of the trace
+    ...readImageData(filename),
+  ];
+}
+
 type BuildOnePictureOutcome<T extends HasTimeDelta> = [
   { imageSpans: Array<T & TraceSpanSpec>; rest: T[] },
   "Give up, there's no way this is gonna fit" | null
@@ -137,11 +147,9 @@ function buildOnePicture<T extends HasTimeDelta>(
   { filename }: ImageSource
 ): BuildOnePictureOutcome<T> {
   return spaninate("build one picture", (s) => {
-    s.setAttributes({"app.filename": filename});
-    const waterfallImageDescriptionWithRoot = [
-      { start: 0, width: 0, waterfallColor: "none" }, // invent an early root span because I want this at the top of the trace
-      ...readImageData(filename),
-    ];
+    s.setAttributes({ "app.filename": filename });
+    const waterfallImageDescriptionWithRoot =
+      readWaterfallImageDescription(filename);
 
     const maxIncrement = maxIncrementThatMightStillFit(
       spans,
