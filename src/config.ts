@@ -6,6 +6,7 @@ import { StackedGraphConfig } from "./stackedGraph";
 import { WaterfallConfig } from "./waterfall";
 import { spaninate } from "./tracing";
 import fs from "fs";
+import path from "path";
 
 export const HappyO11ydaysConfig: WaterfallConfig = {
   waterfallImages: [
@@ -36,7 +37,16 @@ export function readConfiguration(filename: string): InternalConfig {
   return spaninate("read configuration", (s) => {
     s.setAttribute("app.configFile", filename);
     const configContent = readJson(filename) as ExternalConfig;
-    const pixels = readImage(configContent.heatmap.imageFile);
+    const configDir = path.dirname(filename);
+    s.setAttribute("app.configDir", configDir);
+    const heatmapImageFile = path.resolve(
+      configDir,
+      configContent.heatmap.imageFile
+    );
+    s.setAttribute("app.heatmapImageFile", heatmapImageFile);
+
+    const pixels = readImage(heatmapImageFile);
+
     return {
       heatmap: { attributesByRedness: rednessJson, pixels },
       stackedGraph: HappyO11ydaysSGConfig,
