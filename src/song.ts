@@ -1,10 +1,15 @@
 import fs from "fs";
+import { spaninate } from "./tracing";
+import otel from "@opentelemetry/api";
 
 const verseMarker = "🎼";
 export class SpanSong {
   private verses: Verse[];
   constructor(private filename: string) {
-    const data = fs.readFileSync(filename, { encoding: "utf8" });
+    const data = spaninate("read file for span song", (span) => {
+      span.setAttribute("app.filename", filename);
+      return fs.readFileSync(filename, { encoding: "utf8" });
+    });
     this.verses = data.split(verseMarker).map((l) => new Verse(l));
   }
 
