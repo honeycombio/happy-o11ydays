@@ -148,28 +148,23 @@ function buildOnePicture<T extends HasTimeDelta>(
 ): BuildOnePictureOutcome<T> {
   return spaninate("build one picture", (s) => {
     s.setAttributes({ "app.filename": filename });
-    const waterfallImageDescriptionWithRoot =
+    const waterfallImageDescription =
       readWaterfallImageDescription(filename);
 
     const maxIncrement = maxIncrementThatMightStillFit(
       spans,
-      waterfallImageDescriptionWithRoot
+      waterfallImageDescription
     );
     const possibleIncrements = range(0, maxIncrement + 1);
     shuffleArray(possibleIncrements);
     const finalFitResult: "fail" | FoundASpot<T> = findResult(
       possibleIncrements,
-      (incrementFromTheLeft) => {
-        const [fitResult, fitError] = findASpot(
+      (incrementFromTheLeft) => 
+        findASpot(
           spans,
-          waterfallImageDescriptionWithRoot,
+          waterfallImageDescription,
           incrementFromTheLeft++
-        );
-        if (fitError) {
-          return "fail";
-        }
-        return fitResult;
-      }
+        )
     );
 
     if (finalFitResult === "fail") {
@@ -443,11 +438,11 @@ function mapUntilFail<T, R>(
 
 function findResult<T, R>(
   arr: T[],
-  fn: (e: T, i: number) => R | "fail"
+  fn: (e: T, i: number) => [R, null] | [null, "Not enough room"]
 ): R | "fail" {
   for (var i = 0; i < arr.length; i++) {
-    const result = fn(arr[i], i);
-    if (result !== "fail") {
+    const [result, err] = fn(arr[i], i);
+    if (err !== "Not enough room") {
       return result;
     }
   }
