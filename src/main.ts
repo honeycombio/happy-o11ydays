@@ -14,6 +14,7 @@ import {
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
 import { buildPicturesInWaterfall, TraceSpanSpec } from "./waterfall";
+import { spaninate } from "./tracing";
 
 const greeting = ` _________________ 
 < Happy O11ydays! >
@@ -26,15 +27,7 @@ const greeting = ` _________________
 `;
 
 async function main(rootContext: Context, imageFile: string) {
-  tracer.startActiveSpan("check authorization", async (s) => {
-    try {
-      await checkAuthorization();
-    } catch (e) {
-      s.recordException(e as Error);
-    } finally {
-      s.end();
-    }
-  });
+  await spaninate("check authorization", () => checkAuthorization());
   await initializeDataset();
 
   console.log(greeting);
