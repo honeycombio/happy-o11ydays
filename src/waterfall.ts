@@ -38,11 +38,11 @@ const nothingSpecialOnTheWaterfall = {
  * Represent the span with a color containing blue, but no red.
  * Represent a sparkle with any amount of red.
  */
-type WaterfallConfiguration = {
+export type WaterfallConfig = {
   waterfallImages: ImageSource[];
   song: SongConfig;
 };
-export const HappyO11ydaysConfig: WaterfallConfiguration = {
+export const HappyO11ydaysConfig: WaterfallConfig = {
   waterfallImages: [
     { filename: "input/bigger-tree.png", maxCount: 10 },
     { filename: "input/tiny-tree.png", maxCount: 1 },
@@ -63,7 +63,7 @@ function fetchImageSources(config: ImageSource[]): WaterfallImageDescription[] {
 }
 
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
-  config: WaterfallConfiguration,
+  config: WaterfallConfig,
   spans: T[]
 ): Array<T & TraceSpanSpec> {
   const result = reduceUntilStop(

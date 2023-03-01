@@ -10,16 +10,19 @@ import {
   planEndTime,
   HrTime,
   convertPixelsToSpans,
+  HeatmapConfig,
 } from "./heatmap";
 import {
   addStackedGraphAttributes,
   HappyO11ydaysSGConfig,
+  StackedGraphConfig,
 } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
 import {
   buildPicturesInWaterfall,
   HappyO11ydaysConfig,
   TraceSpanSpec,
+  WaterfallConfig,
 } from "./waterfall";
 import { spaninate, spaninateAsync } from "./tracing";
 
@@ -44,7 +47,13 @@ async function main(rootContext: Context, imageFile: string) {
 
   const pixels = spaninate("read image", () => readImage(imageFile));
 
-  const spanSpecs = spaninate("plan spans", () => planSpans(pixels));
+  const config: InternalConfig = {
+    heatmap: { attributesByRedness: rednessJson, pixels },
+    stackedGraph: HappyO11ydaysSGConfig,
+    waterfall: HappyO11ydaysConfig,
+  };
+
+  const spanSpecs = spaninate("plan spans", () => planSpans(config));
 
   const sentSpanContext = spaninate("send spans", () =>
     sendSpans(rootContext, spanSpecs)
@@ -65,16 +74,21 @@ type SpanSpec = HeatmapSpanSpec &
   TraceSpanSpec &
   Record<string, number | string | boolean>;
 
-function planSpans(pixels: Pixels): SpanSpec[] {
+type InternalConfig = {
+  heatmap: HeatmapConfig;
+  stackedGraph: StackedGraphConfig;
+  waterfall: WaterfallConfig;
+};
+function planSpans(config: InternalConfig): SpanSpec[] {
   const heatmapSpanSpecs = spaninate("convert pixels to spans", () =>
-    convertPixelsToSpans({ attributesByRedness: rednessJson, pixels })
+    convertPixelsToSpans(config.heatmap)
   );
 
   const graphSpanSpecs = spaninate("add stacked graph attributes", () => {
-    return addStackedGraphAttributes(HappyO11ydaysSGConfig, heatmapSpanSpecs);
+    return addStackedGraphAttributes(config.stackedGraph, heatmapSpanSpecs);
   });
   const spanSpecs = spaninate("build pictures in waterfall", () =>
-    buildPicturesInWaterfall(HappyO11ydaysConfig, graphSpanSpecs)
+    buildPicturesInWaterfall(config.waterfall, graphSpanSpecs)
   );
 
   return spanSpecs;
