@@ -1,5 +1,4 @@
 import { sdk } from "./initialize-tracing";
-import { Pixels, readImage } from "./image";
 
 import otel, { Context, Span, SpanContext } from "@opentelemetry/api";
 import { checkAuthorization, findLinkToDataset } from "./honeyApi";
@@ -10,21 +9,12 @@ import {
   planEndTime,
   HrTime,
   convertPixelsToSpans,
-  HeatmapConfig,
 } from "./heatmap";
-import {
-  addStackedGraphAttributes,
-  HappyO11ydaysSGConfig,
-  StackedGraphConfig,
-} from "./stackedGraph";
+import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
-import {
-  buildPicturesInWaterfall,
-  HappyO11ydaysConfig,
-  TraceSpanSpec,
-  WaterfallConfig,
-} from "./waterfall";
+import { buildPicturesInWaterfall, TraceSpanSpec } from "./waterfall";
 import { spaninate, spaninateAsync } from "./tracing";
+import { InternalConfig, readConfiguration } from "./config";
 
 const greeting = ` _________________ 
 < Happy O11ydays! >
@@ -45,13 +35,9 @@ async function main(rootContext: Context, imageFile: string) {
 
   spaninate("greet", () => console.log(greeting));
 
-  const pixels = spaninate("read image", () => readImage(imageFile));
-
-  const config: InternalConfig = {
-    heatmap: { attributesByRedness: rednessJson, pixels },
-    stackedGraph: HappyO11ydaysSGConfig,
-    waterfall: HappyO11ydaysConfig,
-  };
+  const config = spaninate("read configuration", () =>
+    readConfiguration(imageFile)
+  );
 
   const spanSpecs = spaninate("plan spans", () => planSpans(config));
 
@@ -68,17 +54,10 @@ async function main(rootContext: Context, imageFile: string) {
   console.log("  Oh look, I drew a picture: " + url + "\n");
 }
 
-import { default as rednessJson } from "../input/redkey.json";
-
 type SpanSpec = HeatmapSpanSpec &
   TraceSpanSpec &
   Record<string, number | string | boolean>;
 
-type InternalConfig = {
-  heatmap: HeatmapConfig;
-  stackedGraph: StackedGraphConfig;
-  waterfall: WaterfallConfig;
-};
 function planSpans(config: InternalConfig): SpanSpec[] {
   const heatmapSpanSpecs = spaninate("convert pixels to spans", () =>
     convertPixelsToSpans(config.heatmap)
