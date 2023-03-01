@@ -40,25 +40,17 @@ const nothingSpecialOnTheWaterfall = {
  */
 type ImageSource = { filename: string };
 const IMAGE_SOURCES = [
-  Array(10).fill({
-    filename: "input/bigger-tree.png",
-  }),
-  Array(1).fill({
-    filename: "input/tiny-tree.png",
-  }),
-  Array(1).fill({
-    filename: "input/bee.png",
-  }),
-  Array(20).fill({
-    filename: "input/ornament.png",
-  }),
+  Array(10).fill(readWaterfallImageDescription("input/bigger-tree.png")),
+  Array(1).fill(readWaterfallImageDescription("input/tiny-tree.png")),
+  Array(1).fill(readWaterfallImageDescription("input/bee.png")),
+  Array(20).fill(readWaterfallImageDescription("input/ornament.png")),
 ].flat();
 
 export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
   const result = reduceUntilStop(
-    IMAGE_SOURCES.map((i) => readWaterfallImageDescription(i.filename)),
+    IMAGE_SOURCES,
     (resultsSoFar, img, i) => {
       const [newResult, err] = buildOnePicture(resultsSoFar.rest, img);
       if (err) {
