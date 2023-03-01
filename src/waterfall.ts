@@ -1,5 +1,6 @@
 import { Pixel, Pixels, readImage } from "./image";
 import { SpanSong } from "./song";
+import { spaninate } from "./tracing";
 
 type HasTimeDelta = { time_delta: DistanceFromRight };
 export type FractionOfGranularity = number;
@@ -65,7 +66,6 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
     (resultsSoFar, img, i) => {
       const [newResult, err] = buildOnePicture(resultsSoFar.rest, img);
       if (err) {
-        console.log(`${i} pictures built into trace`);
         return "stop";
       }
       return {
@@ -140,57 +140,59 @@ function buildOnePicture<T extends HasTimeDelta>(
   spans: T[],
   { filename, waterfallImageName }: ImageSource
 ): BuildOnePictureOutcome<T> {
-  const waterfallImageDescriptionWithRoot = [
-    { start: 0, width: 0, waterfallColor: "none" }, // invent an early root span because I want this at the top of the trace
-    ...readImageData(filename),
-  ];
-
-  const maxIncrement = maxIncrementThatMightStillFit(
-    spans,
-    waterfallImageDescriptionWithRoot
-  );
-  const possibleIncrements = range(0, maxIncrement + 1);
-  shuffleArray(possibleIncrements);
-  const finalFitResult: "fail" | FoundASpot<T> = findResult(
-    possibleIncrements,
-    (incrementFromTheLeft) => {
-      const [fitResult, fitError] = findASpot(
-        spans,
-        waterfallImageDescriptionWithRoot,
-        incrementFromTheLeft++
-      );
-      if (fitError) {
-        return "fail";
-      }
-      return fitResult;
-    }
-  );
-
-  if (finalFitResult === "fail") {
-    // we are done putting images in there
-    return [
-      { imageSpans: [], rest: spans },
-      "Give up, there's no way this is gonna fit",
+  return spaninate("build one picture", (s) => {
+    const waterfallImageDescriptionWithRoot = [
+      { start: 0, width: 0, waterfallColor: "none" }, // invent an early root span because I want this at the top of the trace
+      ...readImageData(filename),
     ];
-  }
 
-  const { waterfallImageSpans, availableSpans } = finalFitResult;
-  // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
+    const maxIncrement = maxIncrementThatMightStillFit(
+      spans,
+      waterfallImageDescriptionWithRoot
+    );
+    const possibleIncrements = range(0, maxIncrement + 1);
+    shuffleArray(possibleIncrements);
+    const finalFitResult: "fail" | FoundASpot<T> = findResult(
+      possibleIncrements,
+      (incrementFromTheLeft) => {
+        const [fitResult, fitError] = findASpot(
+          spans,
+          waterfallImageDescriptionWithRoot,
+          incrementFromTheLeft++
+        );
+        if (fitError) {
+          return "fail";
+        }
+        return fitResult;
+      }
+    );
 
-  const waterfallImageSpecs3 = determineTreeStructure(
-    waterfallImageSpans
-  ) as Array<T & TraceSpanSpec>; // fuck you typescript, i have spent too much time fighting you
+    if (finalFitResult === "fail") {
+      // we are done putting images in there
+      return [
+        { imageSpans: [], rest: spans },
+        "Give up, there's no way this is gonna fit",
+      ];
+    }
 
-  return [
-    {
-      imageSpans: waterfallImageSpecs3.map((s) => ({
-        ...s,
-        waterfallImageName,
-      })),
-      rest: availableSpans,
-    },
-    null,
-  ];
+    const { waterfallImageSpans, availableSpans } = finalFitResult;
+    // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
+
+    const waterfallImageSpecs3 = determineTreeStructure(
+      waterfallImageSpans
+    ) as Array<T & TraceSpanSpec>; // fuck you typescript, i have spent too much time fighting you
+
+    return [
+      {
+        imageSpans: waterfallImageSpecs3.map((s) => ({
+          ...s,
+          waterfallImageName,
+        })),
+        rest: availableSpans,
+      },
+      null,
+    ];
+  });
 }
 
 function maxIncrementThatMightStillFit(
