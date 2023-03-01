@@ -27,7 +27,10 @@ const greeting = ` _________________
 `;
 
 async function main(rootContext: Context, imageFile: string) {
-  const authData = await spaninateAsync("check authorization", checkAuthorization);
+  const authData = await spaninateAsync(
+    "check authorization",
+    checkAuthorization
+  );
   await spaninateAsync("init dataset", initializeDataset);
 
   spaninate("greet", () => console.log(greeting));
@@ -54,10 +57,16 @@ type SpanSpec = HeatmapSpanSpec &
   Record<string, number | string | boolean>;
 
 function planSpans(pixels: Pixels): SpanSpec[] {
-  const heatmapSpanSpecs = spaninate("convert pixels to spans", () => convertPixelsToSpans(pixels));
+  const heatmapSpanSpecs = spaninate("convert pixels to spans", () =>
+    convertPixelsToSpans(pixels)
+  );
 
-  const graphSpanSpecs = spaninate("add stacked graph attributes", () => addStackedGraphAttributes(heatmapSpanSpecs));
-  const spanSpecs = spaninate("build pictures in waterfall", () => buildPicturesInWaterfall(graphSpanSpecs));
+  const graphSpanSpecs = spaninate("add stacked graph attributes", () =>
+    addStackedGraphAttributes(heatmapSpanSpecs)
+  );
+  const spanSpecs = spaninate("build pictures in waterfall", () =>
+    buildPicturesInWaterfall(graphSpanSpecs)
+  );
 
   return spanSpecs;
 }
@@ -70,7 +79,15 @@ function sendSpans(rootContext: Context, spanSpecs: SpanSpec[]): SpanContext {
   // the root span has no height, so it doesn't appear in the heatmap
   return tracer.startActiveSpan(
     "🎼",
-    { startTime: placeHorizontallyInBucket(begin, earliestTimeDelta, 0), links: [{ attributes: {"why": "run that created me"}, context: otel.trace.getActiveSpan()!.spanContext() }] },
+    {
+      startTime: placeHorizontallyInBucket(begin, earliestTimeDelta, 0),
+      links: [
+        {
+          attributes: { why: "run that created me" },
+          context: otel.trace.getActiveSpan()!.spanContext(),
+        },
+      ],
+    },
     rootContext,
     (rootSpan) => {
       // create all the spans for the picture
