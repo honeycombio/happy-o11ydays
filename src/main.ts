@@ -36,15 +36,17 @@ async function main(rootContext: Context, imageFile: string) {
 
   const spanSpecs = spaninate("plan spans", () => planSpans(pixels));
 
-  const sentSpanContext = spaninate("send spans", () => sendSpans(rootContext, spanSpecs));
-  tracer.startSpan("link to trace", {links: [ { context: sentSpanContext } ]}).end();
-
-  const link = await spaninateAsync("find link to dataset", () => findLinkToDataset(authData, sentSpanContext.traceId));
-  console.log("  Run a new query for HEATMAP(height) in this dataset: " + link);
-
-  console.log(
-    "  Check the README for how to get the query just right, and see the picture, and then investigate it!\n"
+  const sentSpanContext = spaninate("send spans", () =>
+    sendSpans(rootContext, spanSpecs)
   );
+  tracer
+    .startSpan("link to trace", { links: [{ context: sentSpanContext }] })
+    .end();
+
+  const url = await spaninateAsync("find link to dataset", () =>
+    findLinkToDataset(authData, sentSpanContext.traceId)
+  );
+  console.log("  Oh look, I drew a picture: " + url);
 }
 
 type SpanSpec = HeatmapSpanSpec &
