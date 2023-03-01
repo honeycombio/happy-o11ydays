@@ -72,7 +72,7 @@ function planSpans(config: InternalConfig): SpanSpec[] {
 }
 
 function sendSpans(rootContext: Context, spanSpecs: SpanSpec[]): SpanContext {
-  const tracer = otel.trace.getTracer("viz-art");
+  const tracer = otel.trace.getTracer("o11y o11y artistry");
   const begin: SecondsSinceEpoch = Math.ceil(Date.now() / 1000);
   var traceId: string;
   const earliestTimeDelta = Math.min(...spanSpecs.map((s) => s.time_delta));
