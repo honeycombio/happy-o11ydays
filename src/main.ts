@@ -14,7 +14,7 @@ import {
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
 import { buildPicturesInWaterfall, TraceSpanSpec } from "./waterfall";
-import { spaninate } from "./tracing";
+import { spaninate, spaninateAsync } from "./tracing";
 
 const greeting = ` _________________ 
 < Happy O11ydays! >
@@ -27,7 +27,7 @@ const greeting = ` _________________
 `;
 
 async function main(rootContext: Context, imageFile: string) {
-  await spaninate("check authorization", () => checkAuthorization());
+  await spaninateAsync("check authorization", checkAuthorization);
   await initializeDataset();
 
   console.log(greeting);
