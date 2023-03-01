@@ -157,28 +157,28 @@ sdk
   .then(() =>
     tracer.startActiveSpan("main", (s) =>
       main(rootContext, imageFile)
-        .then(() =>
-          console.log(
-            `Trace in jaeger: http://localhost:16686/trace/${
-              s.spanContext().traceId
-            }`
-          )
-        )
-        .then(() =>
-          console.log(
-            `Trace in honeycomb:https://ui.honeycomb.io/modernity/environments/spotcon/datasets/happy-o11ydays/trace?trace_id=${
-              s.spanContext().traceId
-            }`
-          )
-        )
         .then(
-          () => s.end(),
+          () => {
+            s.end();
+          },
           (e) => {
             s.recordException(e);
             s.end();
-            throw e;
+            console.log(e); // do catch it, so that the sdk will shutdown and we will get the whole trace
           }
         )
+        .then(() => printTraceLink(s))
     )
   )
   .then(() => sdk.shutdown());
+
+function printTraceLink(s: Span) {
+  console.log(
+    `Trace in jaeger: http://localhost:16686/trace/${s.spanContext().traceId}`
+  );
+  console.log(
+    `Trace in honeycomb:https://ui.honeycomb.io/modernity/environments/spotcon/datasets/happy-o11ydays/trace?trace_id=${
+      s.spanContext().traceId
+    }`
+  );
+}
