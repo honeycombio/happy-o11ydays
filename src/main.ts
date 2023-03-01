@@ -37,6 +37,7 @@ async function main(rootContext: Context, imageFile: string) {
   const spanSpecs = spaninate("plan spans", () => planSpans(pixels));
 
   const sentSpanContext = spaninate("send spans", () => sendSpans(rootContext, spanSpecs));
+  tracer.startSpan("link to trace", {links: [ { context: sentSpanContext } ]}).end();
 
   const link = await spaninateAsync("find link to dataset", () => findLinkToDataset(authData, sentSpanContext.traceId));
   console.log("  Run a new query for HEATMAP(height) in this dataset: " + link);
