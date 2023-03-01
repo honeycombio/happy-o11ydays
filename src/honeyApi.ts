@@ -59,6 +59,7 @@ export function fetchConfiguration() {
 }
 
 export async function findLinkToDataset(
+  authData: AuthResponse,
   traceId: string
 ): Promise<string | undefined> {
   const { dataset, apiKey } = fetchConfiguration();
@@ -66,11 +67,6 @@ export async function findLinkToDataset(
     return undefined;
   }
 
-  const authData = await fetchAuthorization(apiKey);
-  if (authData === undefined) {
-    console.log("Warning: couldn't retrieve honeycomb auth info.");
-    return undefined;
-  }
   const datasetPortion = dataset ? `/datasets/${dataset}` : "";
 
   //return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}/trace?trace_id=${traceId}`;
@@ -95,4 +91,5 @@ export async function checkAuthorization() {
       "WARNING: No create dataset permission... if this is the only API key you can get, then set OTEL_SERVICE_NAME to an existing dataset."
     );
   }
+  return authData;
 }
