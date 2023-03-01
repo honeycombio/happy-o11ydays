@@ -23,6 +23,10 @@ export const HappyO11ydaysSGConfig = {
   imageFilename: "input/house.png",
 };
 
+export type ExternalConfig = {
+  heatmap: { imageFile: string };
+};
+
 export type InternalConfig = {
   heatmap: HeatmapConfig;
   stackedGraph: StackedGraphConfig;
@@ -31,7 +35,8 @@ export type InternalConfig = {
 export function readConfiguration(filename: string): InternalConfig {
   return spaninate("read configuration", (s) => {
     s.setAttribute("app.configFile", filename);
-    const pixels = readImage(filename);
+    const configContent = readJson(filename) as ExternalConfig;
+    const pixels = readImage(configContent.heatmap.imageFile);
     return {
       heatmap: { attributesByRedness: rednessJson, pixels },
       stackedGraph: HappyO11ydaysSGConfig,
