@@ -58,7 +58,7 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   spans: T[]
 ): Array<T & TraceSpanSpec> {
   const result = reduceUntilStop(
-    IMAGE_SOURCES,
+    IMAGE_SOURCES.map((i) => readWaterfallImageDescription(i.filename)),
     (resultsSoFar, img, i) => {
       const [newResult, err] = buildOnePicture(resultsSoFar.rest, img);
       if (err) {
@@ -144,12 +144,14 @@ type BuildOnePictureOutcome<T extends HasTimeDelta> = [
 ];
 function buildOnePicture<T extends HasTimeDelta>(
   spans: T[],
-  { filename }: ImageSource
+  waterfallImageDescription: WaterfallImageDescription
 ): BuildOnePictureOutcome<T> {
   return spaninate("build one picture", (s) => {
-    s.setAttributes({ "app.filename": filename });
-    const waterfallImageDescription =
-      readWaterfallImageDescription(filename);
+    s.setAttributes({
+      "app.waterfallImageDescription": JSON.stringify(
+        waterfallImageDescription
+      ),
+    });
 
     const maxIncrement = maxIncrementThatMightStillFit(
       spans,
@@ -159,12 +161,8 @@ function buildOnePicture<T extends HasTimeDelta>(
     shuffleArray(possibleIncrements);
     const finalFitResult: "fail" | FoundASpot<T> = findResult(
       possibleIncrements,
-      (incrementFromTheLeft) => 
-        findASpot(
-          spans,
-          waterfallImageDescription,
-          incrementFromTheLeft++
-        )
+      (incrementFromTheLeft) =>
+        findASpot(spans, waterfallImageDescription, incrementFromTheLeft++)
     );
 
     if (finalFitResult === "fail") {
