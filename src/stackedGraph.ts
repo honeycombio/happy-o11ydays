@@ -112,11 +112,19 @@ function groupByTimeDelta<T extends EnoughOfASpanSpec>(
 
 type EnoughOfASpanSpec = { time_delta: number };
 type PossibleStackSpec = { stackHeight?: number; stackGroup?: string };
+
+export const HappyO11ydaysSGConfig = {
+  imageFilename: "input/house.png",
+};
+export type StackedGraphConfig = {
+  imageFilename: string;
+};
 export function addStackedGraphAttributes<T extends EnoughOfASpanSpec>(
+  config: StackedGraphConfig,
   spanSpecs: T[]
 ): Array<T & PossibleStackSpec> {
   var stackSpecCountByDelta = groupByTimeDelta(
-    readSpecsFromImage("input/house.png")
+    readSpecsFromImage(config.imageFilename)
   ); // the array reference won't be mutated but its contents will be
 
   const withStackSpecs = spanSpecs.map((ss) => {

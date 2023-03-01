@@ -11,7 +11,10 @@ import {
   HrTime,
   convertPixelsToSpans,
 } from "./heatmap";
-import { addStackedGraphAttributes } from "./stackedGraph";
+import {
+  addStackedGraphAttributes,
+  HappyO11ydaysSGConfig,
+} from "./stackedGraph";
 import { initializeDataset } from "./dataset";
 import {
   buildPicturesInWaterfall,
@@ -65,9 +68,9 @@ function planSpans(pixels: Pixels): SpanSpec[] {
     convertPixelsToSpans(pixels)
   );
 
-  const graphSpanSpecs = spaninate("add stacked graph attributes", () =>
-    addStackedGraphAttributes(heatmapSpanSpecs)
-  );
+  const graphSpanSpecs = spaninate("add stacked graph attributes", () => {
+    return addStackedGraphAttributes(HappyO11ydaysSGConfig, heatmapSpanSpecs);
+  });
   const spanSpecs = spaninate("build pictures in waterfall", () =>
     buildPicturesInWaterfall(HappyO11ydaysConfig, graphSpanSpecs)
   );
