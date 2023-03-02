@@ -7,6 +7,7 @@ import { WaterfallConfig } from "./waterfall";
 import { spaninate } from "./tracing";
 import fs from "fs";
 import path from "path";
+import { SendConfig } from "./transmit";
 
 export const HappyO11ydaysSGConfig = {
   imageFilename: "input/house.png",
@@ -27,6 +28,7 @@ export type InternalConfig = {
   heatmap: HeatmapConfig;
   stackedGraph: StackedGraphConfig;
   waterfall: WaterfallConfig;
+  transmit: SendConfig;
 };
 export function readConfiguration(filename: string): InternalConfig {
   return spaninate("read configuration", (s) => {
@@ -64,6 +66,7 @@ export function readConfiguration(filename: string): InternalConfig {
       },
       stackedGraph: HappyO11ydaysSGConfig,
       waterfall: { waterfallImages, song: { songLyrics } },
+      transmit: {},
     };
   });
 }
