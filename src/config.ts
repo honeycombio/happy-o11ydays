@@ -1,13 +1,13 @@
 import { readImage } from "./image";
 
 import { default as rednessJson } from "../input/redkey.json";
-import { HeatmapConfig } from "./heatmap";
+import { HeatmapConfig, SecondsSinceEpoch } from "./heatmap";
 import { StackedGraphConfig } from "./stackedGraph";
 import { WaterfallConfig } from "./waterfall";
 import { spaninate } from "./tracing";
 import fs from "fs";
 import path from "path";
-import { SendConfig } from "./transmit";
+import { fetchNow, SendConfig } from "./transmit";
 
 export const HappyO11ydaysSGConfig = {
   imageFilename: "input/house.png",
@@ -21,6 +21,9 @@ export type ExternalConfig = {
   waterfall: {
     waterfallImages: { filename: string; maxCount: number }[];
     song: { lyricsFile: string };
+  };
+  transmit?: {
+    now: SecondsSinceEpoch;
   };
 };
 
@@ -58,6 +61,10 @@ export function readConfiguration(filename: string): InternalConfig {
       relativeToConfig(configContent.waterfall.song.lyricsFile)
     );
 
+    const now = configContent.transmit?.now || fetchNow();
+    s.setAttribute("app.configuredNow", configContent.transmit?.now || "none");
+    s.setAttribute("app.now", now);
+
     return {
       heatmap: {
         attributesByRedness: rednessJson,
@@ -66,7 +73,7 @@ export function readConfiguration(filename: string): InternalConfig {
       },
       stackedGraph: HappyO11ydaysSGConfig,
       waterfall: { waterfallImages, song: { songLyrics } },
-      transmit: {},
+      transmit: { now },
     };
   });
 }

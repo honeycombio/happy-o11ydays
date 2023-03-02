@@ -34,7 +34,7 @@ async function main(rootContext: Context, imageFile: string) {
   const spanSpecs = spaninate("plan spans", () => planSpans(config));
 
   const sentSpanContext = spaninate("send spans", () =>
-    sendSpans({}, rootContext, spanSpecs)
+    sendSpans(config.transmit, rootContext, spanSpecs)
   );
   tracer
     .startSpan("link to trace", { links: [{ context: sentSpanContext }] })

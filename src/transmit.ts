@@ -1,9 +1,13 @@
 import otel, { Context, HrTime, Span, SpanContext } from "@opentelemetry/api";
-import { HeatmapSpanSpec, placeHorizontallyInBucket, planEndTime } from "./heatmap";
+import {
+  HeatmapSpanSpec,
+  placeHorizontallyInBucket,
+  planEndTime,
+} from "./heatmap";
 import { TraceSpanSpec } from "./waterfall";
 import { spaninate } from "./tracing";
 
-export type SendConfig = { now?: SecondsSinceEpoch };
+export type SendConfig = { now: SecondsSinceEpoch };
 
 type SpanSpec = TraceSpanSpec &
   HeatmapSpanSpec &
@@ -18,7 +22,7 @@ export function sendSpans(
   const executionSpan = otel.trace.getActiveSpan()!;
   executionSpan.setAttribute("app.spanCount", spanSpecs.length);
   const tracer = otel.trace.getTracer("o11y o11y artistry");
-  const begin: SecondsSinceEpoch = fetchCurrentDate(config);
+  const begin: SecondsSinceEpoch = config.now;
   const earliestTimeDelta = Math.min(...spanSpecs.map((s) => s.time_delta));
   // the root span has no height, so it doesn't appear in the heatmap
   return tracer.startActiveSpan(
@@ -78,9 +82,9 @@ export function sendSpans(
   );
 }
 
-function fetchCurrentDate(config: SendConfig) {
+export function fetchNow() {
   return spaninate("now", (s) => {
-    const result = config.now || Math.ceil(Date.now() / 1000);
+    const result = Math.ceil(Date.now() / 1000);
     s.setAttribute("app.now", result.toString());
     return result;
   });
