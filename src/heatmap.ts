@@ -148,12 +148,12 @@ export function placeVerticallyInBuckets(
   const imageHeightRange = pictureHeight - imageBase + 1;
   if (imageHeightRange > 50) {
     console.log(
-      "WARNING: The picture is too tall. Make its content 25-50 pixels high"
+      "WARNING: The heatmap picture is too tall. Make its content 25-50 pixels high"
     );
   }
   if (imageHeightRange <= 25) {
     console.log(
-      "WARNING: The picture is too short. Make its content 25-50 pixels high"
+      "WARNING: The heatmap picture is too short. Make its content 25-50 pixels high"
     );
   }
   var predictedStepSize = 1.6777216; // this is just what it is. 0.0000001 * 2^24

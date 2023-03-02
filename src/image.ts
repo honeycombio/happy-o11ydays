@@ -1,6 +1,7 @@
 import { PNG, PNGWithMetadata } from "pngjs";
 import fs from "fs";
 import { spaninate } from "./tracing";
+import otel from "@opentelemetry/api";
 
 function readPng(location: string): PNGWithMetadata {
   return spaninate("read png", (s) => {
@@ -122,16 +123,12 @@ function writeImage(png: PNG, filename: string) {
 
 export function readImage(imageFile: string) {
   const pixels = new Pixels(readPng(imageFile));
-
-  // console.log("alpha:");
-  // printLines(pixels, (p) => p.color.alpha);
-  // console.log("Red:");
-  // printLines(pixels, (p) => p.color.red);
-  // console.log("Green:");
-  // printLines(pixels, (p) => p.color.green);
-  // console.log("Blue:");
-  // printLines(pixels, (p) => p.color.blue);
-  // printLines(pixels, (p) => p.location.x);
+  otel.trace
+    .getActiveSpan()
+    ?.setAttributes({
+      "app.imageHeight": pixels.height,
+      "app.imageWidth": pixels.width,
+    });
 
   return pixels;
 }

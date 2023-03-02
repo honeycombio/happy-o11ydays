@@ -1,5 +1,6 @@
 import { Pixel, readImage } from "./image";
 import { default as stackKey } from "../input/stackKey.json";
+import otel from "@opentelemetry/api";
 
 function onlyUnique<T>(value: T, index: number, self: T[]): boolean {
   return self.indexOf(value) === index;
@@ -135,17 +136,14 @@ export function addStackedGraphAttributes<T extends EnoughOfASpanSpec>(
   });
 
   // warn if we missed any
-  Object.values(stackSpecCountByDelta)
-    .filter((ss) => ss.length > 0)
-    .forEach((missedSpecs) => {
-      console.log(
-        `WARNING: ${missedSpecs.length} stack spec at ${
-          missedSpecs[0].time_delta
-        } unused. You'll be missing a ${missedSpecs
-          .map((ss) => ss.stackGroup)
-          .join(" and a ")}`
-      );
-    });
+  const missedSpecs = Object.values(stackSpecCountByDelta).filter(
+    (ss) => ss.length > 0
+  );
+
+  otel.trace
+    .getActiveSpan()
+    ?.setAttribute("app.stackedGraph.missedSpecs", JSON.stringify(missedSpecs));
+
   return withStackSpecs;
 }
 
@@ -164,8 +162,10 @@ function determineOrdering<T>(knownOrderings: T[][]): T[] {
       onlyExistsAtGroundLevel(orderingsToLookAt)
     );
     if (bottomColors.length === 0) {
-      console.log("Colors remaining: " + JSON.stringify(remainingColors));
-      console.log("Orderings: " + JSON.stringify(orderingsToLookAt));
+      otel.trace
+        .getActiveSpan()
+        ?.setAttribute("app.colorsRemaining", JSON.stringify(remainingColors))
+        .setAttribute("app.orderings", JSON.stringify(orderingsToLookAt));
       throw new Error(
         "Oh no, can't find any colors that exist only on the bottom, infinite loop"
       );
