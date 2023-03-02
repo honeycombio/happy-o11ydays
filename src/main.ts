@@ -2,12 +2,7 @@ import { sdk } from "./initialize-tracing";
 
 import otel, { Context, Span, SpanContext } from "@opentelemetry/api";
 import { checkAuthorization, findLinkToDataset } from "./honeyApi";
-import {
-  HeatmapSpanSpec,
-  planEndTime,
-  HrTime,
-  convertPixelsToSpans,
-} from "./heatmap";
+import { HeatmapSpanSpec, convertPixelsToSpans } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
 import { buildPicturesInWaterfall, TraceSpanSpec } from "./waterfall";
@@ -69,12 +64,6 @@ function planSpans(config: InternalConfig): SpanSpec[] {
 
   return spanSpecs;
 }
-
-
-
-const byTime = function (ss1: HeatmapSpanSpec, ss2: HeatmapSpanSpec) {
-  return ss2.time_delta - ss1.time_delta;
-};
 
 const tracer = otel.trace.getTracer("main.ts");
 
