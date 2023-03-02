@@ -43,11 +43,11 @@ export type WaterfallConfig = {
   song: SongConfig;
 };
 
-type ImageSource = { filename: string; maxCount: number };
+type ImageSource = { pixels: Pixels; maxCount: number };
 function fetchImageSources(config: ImageSource[]): WaterfallImageDescription[] {
   return config
-    .map(({ filename, maxCount }) =>
-      Array(maxCount).fill(readWaterfallImageDescription(filename))
+    .map(({ pixels, maxCount }) =>
+      Array(maxCount).fill(readWaterfallImageDescription(pixels))
     )
     .flat();
 }
@@ -129,11 +129,11 @@ function shuffleRoots<T extends HasTimeDelta>(
 
 type WaterfallImageDescription = WaterfallImageRow[];
 function readWaterfallImageDescription(
-  filename: string
+  pixels: Pixels
 ): WaterfallImageDescription {
   return [
     { start: 0, width: 0, waterfallColor: "none" }, // invent an early root span because I want this at the top of the trace
-    ...readImageData(filename),
+    ...readImageData(pixels),
   ];
 }
 
@@ -228,9 +228,7 @@ function proportion<T extends HasTimeDelta>(
   };
 }
 
-function readImageData(filename: string): WaterfallImageRow[] {
-  const pixels = readImage(filename);
-
+function readImageData(pixels: Pixels): WaterfallImageRow[] {
   function hasSomeBlue(p: Pixel): boolean {
     // exclude white
     return p.color.blue > 0 && p.color.darkness() > 0;

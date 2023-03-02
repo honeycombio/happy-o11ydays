@@ -12,10 +12,10 @@
   },
   "waterfall": {
     "waterfallImages": [
-      { "filename": "input/bigger-tree.png", "maxCount": 10 },
-      { "filename": "input/tiny-tree.png", "maxCount": 1 },
-      { "filename": "input/bee.png", "maxCount": 1 },
-      { "filename": "input/ornament.png", "maxCount": 20 }
+      { "filename": "bigger-tree.png", "maxCount": 10 },
+      { "filename": "tiny-tree.png", "maxCount": 1 },
+      { "filename": "bee.png", "maxCount": 1 },
+      { "filename": "ornament.png", "maxCount": 20 }
     ],
     "song": {
       "lyricsFile": "input/song.txt"

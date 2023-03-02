@@ -35,15 +35,20 @@ export function readConfiguration(filename: string): InternalConfig {
     s.setAttribute("app.configContent", JSON.stringify(configContent));
     const configDir = path.dirname(filename);
     s.setAttribute("app.configDir", configDir);
-    const heatmapImageFile = path.resolve(
-      configDir,
-      configContent.heatmap.imageFile
-    );
+    const relativeToConfig = (f: string) => path.resolve(configDir, f);
+    const heatmapImageFile = relativeToConfig(configContent.heatmap.imageFile);
     s.setAttribute("app.heatmapImageFile", heatmapImageFile);
 
     const pixels = readImage(heatmapImageFile);
     const bluenessToEventDensity = keysToNumbers(
       configContent.heatmap.blueChannelToDensity
+    );
+
+    const waterfallImages = configContent.waterfall.waterfallImages.map(
+      (w) => ({
+        maxCount: w.maxCount,
+        pixels: readImage(relativeToConfig(w.filename)),
+      })
     );
 
     return {
@@ -53,7 +58,7 @@ export function readConfiguration(filename: string): InternalConfig {
         pixels,
       },
       stackedGraph: HappyO11ydaysSGConfig,
-      waterfall: configContent.waterfall,
+      waterfall: { waterfallImages, song: configContent.waterfall.song },
     };
   });
 }
