@@ -101,12 +101,16 @@ export function approximateColorByNumberOfSpans(
 
       return (p: Pixel) => bluenessFunction(255 - p.color.blue);
     } else {
+      const bluenessToEventDensity: Record<number, number> = Object.fromEntries(
+        distinctBluenesses.map((b, i) => [b, i + 1])
+      );
+      s.setAttribute(
+        "app.bluenessDensityFunction",
+        JSON.stringify(bluenessToEventDensity)
+      );
+
+      return (p) => bluenessToEventDensity[255 - p.color.blue];
     }
-    s.setAttribute(
-      "app.bluenessDensityFunction",
-      JSON.stringify(bluenessToEventDensity)
-    );
-    return () => 0;
   });
 }
 
