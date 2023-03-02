@@ -43,11 +43,17 @@ export type WaterfallConfig = {
   song: SongConfig;
 };
 
-type ImageSource = { pixels: Pixels; maxCount: number };
+type ImageSource = {
+  pixels: Pixels;
+  waterfallImageName: string;
+  maxCount: number;
+};
 function fetchImageSources(config: ImageSource[]): WaterfallImageDescription[] {
   return config
-    .map(({ pixels, maxCount }) =>
-      Array(maxCount).fill(readWaterfallImageDescription(pixels))
+    .map(({ pixels, maxCount, waterfallImageName }) =>
+      Array(maxCount).fill(
+        readWaterfallImageDescription(pixels, waterfallImageName)
+      )
     )
     .flat();
 }
@@ -127,14 +133,21 @@ function shuffleRoots<T extends HasTimeDelta>(
   imagesInWaterfall.forEach((imageRows, i) => (imageRows[0] = roots[i]));
 }
 
-type WaterfallImageDescription = WaterfallImageRow[];
+type WaterfallImageDescription = {
+  rows: WaterfallImageRow[];
+  waterfallImageName: string;
+};
 function readWaterfallImageDescription(
-  pixels: Pixels
+  pixels: Pixels,
+  waterfallImageName: string
 ): WaterfallImageDescription {
-  return [
-    { start: 0, width: 0, waterfallColor: "none" }, // invent an early root span because I want this at the top of the trace
-    ...readImageData(pixels),
-  ];
+  return {
+    rows: [
+      { start: 0, width: 0, waterfallColor: "none" }, // invent an early root span because I want this at the top of the trace
+      ...readImageData(pixels),
+    ],
+    waterfallImageName,
+  };
 }
 
 type BuildOnePictureOutcome<T extends HasTimeDelta> = [
@@ -147,14 +160,14 @@ function buildOnePicture<T extends HasTimeDelta>(
 ): BuildOnePictureOutcome<T> {
   const maxIncrement = maxIncrementThatMightStillFit(
     spans,
-    waterfallImageDescription
+    waterfallImageDescription.rows
   );
   const possibleIncrements = range(0, maxIncrement + 1);
   shuffleArray(possibleIncrements);
   const finalFitResult: "fail" | FoundASpot<T> = findResult(
     possibleIncrements,
     (incrementFromTheLeft) =>
-      findASpot(spans, waterfallImageDescription, incrementFromTheLeft++)
+      findASpot(spans, waterfallImageDescription.rows, incrementFromTheLeft++)
   );
 
   if (finalFitResult === "fail") {

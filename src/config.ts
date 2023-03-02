@@ -48,6 +48,7 @@ export function readConfiguration(filename: string): InternalConfig {
       (w) => ({
         maxCount: w.maxCount,
         pixels: readImage(relativeToConfig(w.filename)),
+        waterfallImageName: w.filename,
       })
     );
 
