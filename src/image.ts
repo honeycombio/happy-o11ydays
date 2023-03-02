@@ -1,8 +1,8 @@
 import { PNG, PNGWithMetadata } from "pngjs";
 import fs from "fs";
 
-function readPng(location: string): PNGWithMetadata {
-  var data = fs.readFileSync(location);
+function readPng(filename: string): PNGWithMetadata {
+  var data = fs.readFileSync(filename);
   return PNG.sync.read(data);
 }
 
