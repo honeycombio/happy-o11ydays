@@ -220,3 +220,5 @@ and then run this program like
 `./run path/to/your-image.png`
 
 Now go do the HEATMAP(height) and see what it looks like. Tweet a screenshot at @honeycombio please!
+
+[Blackbird poem](https://www.poetryfoundation.org/poems/45236/thirteen-ways-of-looking-at-a-blackbird)

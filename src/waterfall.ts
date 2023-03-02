@@ -84,7 +84,7 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   return [...leftoversAsSpanEvents, ...imageSpans];
 }
 
-type SongConfig = { lyricsFile: string };
+type SongConfig = { songLyrics: string };
 function assignNames<T extends HasTimeDelta & TraceSpanSpec>(
   config: SongConfig,
   images: T[][]
@@ -93,7 +93,7 @@ function assignNames<T extends HasTimeDelta & TraceSpanSpec>(
     return a[0].time_delta - b[0].time_delta;
   }
   images.sort(byRootStartTime);
-  const song = new SpanSong(config.lyricsFile);
+  const song = new SpanSong(config.songLyrics);
   images.forEach((im, i1) => {
     im.forEach((s, i2) => {
       if (!s.spanEvent) {

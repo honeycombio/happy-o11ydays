@@ -51,6 +51,10 @@ export function readConfiguration(filename: string): InternalConfig {
       })
     );
 
+    const songLyrics = readText(
+      relativeToConfig(configContent.waterfall.song.lyricsFile)
+    );
+
     return {
       heatmap: {
         attributesByRedness: rednessJson,
@@ -58,7 +62,7 @@ export function readConfiguration(filename: string): InternalConfig {
         pixels,
       },
       stackedGraph: HappyO11ydaysSGConfig,
-      waterfall: { waterfallImages, song: configContent.waterfall.song },
+      waterfall: { waterfallImages, song: { songLyrics } },
     };
   });
 }
@@ -69,6 +73,14 @@ function readJson(filename: string) {
     const data = fs.readFileSync(filename, { encoding: "utf8" });
     s.setAttribute("app.fileContent", data);
     return JSON.parse(data);
+  });
+}
+
+function readText(filename: string) {
+  return spaninate("read text", (s) => {
+    s.setAttribute("app.filename", filename);
+    const data = fs.readFileSync(filename, { encoding: "utf8" });
+    return data;
   });
 }
 function keysToNumbers(

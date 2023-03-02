@@ -11,7 +11,7 @@
       { "filename": "tree-with-blackbirds.png", "maxCount": 7 }
     ],
     "song": {
-      "lyricsFile": "input/song.txt"
+      "lyricsFile": "poem.txt"
     }
   }
 }

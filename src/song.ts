@@ -1,15 +1,13 @@
-import fs from "fs";
 import { spaninate } from "./tracing";
 
 const verseMarker = "🎼";
 export class SpanSong {
   private verses: Verse[];
-  constructor(private filename: string) {
-    const data = spaninate("read file for span song", (span) => {
-      span.setAttribute("app.filename", filename);
-      return fs.readFileSync(filename, { encoding: "utf8" });
+  constructor(private songLyrics: string) {
+    this.verses = spaninate("construct span song", (span) => {
+      span.setAttribute("app.songLyrics", songLyrics);
+      return songLyrics.split(verseMarker).map((l) => new Verse(l));
     });
-    this.verses = data.split(verseMarker).map((l) => new Verse(l));
   }
 
   public nameThisSpan(): string {
