@@ -1,4 +1,4 @@
-import { Pixel, readImage } from "./image";
+import { Pixel, Pixels, readImage } from "./image";
 import { default as stackKey } from "../input/stackKey.json";
 import otel from "@opentelemetry/api";
 
@@ -13,8 +13,7 @@ function objectMap<V, V2>(
   return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]));
 }
 
-function readSpecsFromImage(filename: string) {
-  const pixels = readImage(filename);
+function readSpecsFromImage(pixels: Pixels) {
   const visible = pixels.all().filter((p) => p.color.darkness() > 0);
 
   // give me the top height of each color, in each column
@@ -115,14 +114,14 @@ type EnoughOfASpanSpec = { time_delta: number };
 type PossibleStackSpec = { stackHeight?: number; stackGroup?: string };
 
 export type StackedGraphConfig = {
-  imageFilename: string;
+  pixels: Pixels;
 };
 export function addStackedGraphAttributes<T extends EnoughOfASpanSpec>(
   config: StackedGraphConfig,
   spanSpecs: T[]
 ): Array<T & PossibleStackSpec> {
   var stackSpecCountByDelta = groupByTimeDelta(
-    readSpecsFromImage(config.imageFilename)
+    readSpecsFromImage(config.pixels)
   ); // the array reference won't be mutated but its contents will be
 
   const withStackSpecs = spanSpecs.map((ss) => {

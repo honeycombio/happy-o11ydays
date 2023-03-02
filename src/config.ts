@@ -9,10 +9,6 @@ import fs from "fs";
 import path from "path";
 import { fetchNow, SendConfig } from "./transmit";
 
-export const HappyO11ydaysSGConfig = {
-  imageFilename: "input/house.png",
-};
-
 export type ExternalConfig = {
   heatmap: {
     imageFile: string;
@@ -21,6 +17,9 @@ export type ExternalConfig = {
   waterfall: {
     waterfallImages: { filename: string; maxCount: number }[];
     song: { lyricsFile: string };
+  };
+  stackedGraph: {
+    imageFile: string;
   };
   transmit?: {
     now: SecondsSinceEpoch;
@@ -41,14 +40,23 @@ export function readConfiguration(filename: string): InternalConfig {
     const configDir = path.dirname(filename);
     s.setAttribute("app.configDir", configDir);
     const relativeToConfig = (f: string) => path.resolve(configDir, f);
+
+    // heatmap
     const heatmapImageFile = relativeToConfig(configContent.heatmap.imageFile);
     s.setAttribute("app.heatmapImageFile", heatmapImageFile);
-
     const pixels = readImage(heatmapImageFile);
     const bluenessToEventDensity = keysToNumbers(
       configContent.heatmap.blueChannelToDensity
     );
 
+    // stacked graph
+    const stackedGraphFile = relativeToConfig(
+      configContent.stackedGraph.imageFile
+    );
+    s.setAttribute("app.stackedGraphImageFile", stackedGraphFile);
+    const stackedGraphPixels = readImage(stackedGraphFile);
+
+    // waterfall
     const waterfallImages = configContent.waterfall.waterfallImages.map(
       (w) => ({
         maxCount: w.maxCount,
@@ -71,7 +79,7 @@ export function readConfiguration(filename: string): InternalConfig {
         bluenessToEventDensity,
         pixels,
       },
-      stackedGraph: HappyO11ydaysSGConfig,
+      stackedGraph: { pixels: stackedGraphPixels },
       waterfall: { waterfallImages, song: { songLyrics } },
       transmit: { now },
     };

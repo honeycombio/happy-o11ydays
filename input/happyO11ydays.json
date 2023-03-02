@@ -10,6 +10,9 @@
       "143": 10
     }
   },
+  "stackedGraph": {
+    "imageFile": "house.png"
+  },
   "waterfall": {
     "waterfallImages": [
       { "filename": "bigger-tree.png", "maxCount": 10 },
