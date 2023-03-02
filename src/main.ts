@@ -71,11 +71,19 @@ function planSpans(config: InternalConfig): SpanSpec[] {
   return spanSpecs;
 }
 
+function fetchCurrentDate() {
+  return spaninate("now", (s) => {
+    const result = Date.now();
+    s.setAttribute("app.now", result.toString());
+    return result;
+  });
+}
+
 function sendSpans(rootContext: Context, spanSpecs: SpanSpec[]): SpanContext {
   const executionSpan = otel.trace.getActiveSpan()!;
   executionSpan.setAttribute("app.spanCount", spanSpecs.length);
   const tracer = otel.trace.getTracer("o11y o11y artistry");
-  const begin: SecondsSinceEpoch = Math.ceil(Date.now() / 1000);
+  const begin: SecondsSinceEpoch = Math.ceil(fetchCurrentDate() / 1000);
   const earliestTimeDelta = Math.min(...spanSpecs.map((s) => s.time_delta));
   // the root span has no height, so it doesn't appear in the heatmap
   return tracer.startActiveSpan(
