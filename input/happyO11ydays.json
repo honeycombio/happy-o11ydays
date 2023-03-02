@@ -1,5 +1,13 @@
 {
   "heatmap": {
-    "imageFile": "dontpeek.png"
+    "imageFile": "dontpeek.png",
+    "blueChannelToDensity": {
+      "18": 1,
+      "46": 3,
+      "56": 4,
+      "71": 5,
+      "89": 6,
+      "143": 10
+    }
   }
 }

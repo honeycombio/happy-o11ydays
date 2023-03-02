@@ -40,6 +40,7 @@ export function readConfiguration(filename: string): InternalConfig {
   return spaninate("read configuration", (s) => {
     s.setAttribute("app.configFile", filename);
     const configContent = readJson(filename) as ExternalConfig;
+    s.setAttribute("app.configContent", JSON.stringify(configContent));
     const configDir = path.dirname(filename);
     s.setAttribute("app.configDir", configDir);
     const heatmapImageFile = path.resolve(
@@ -49,13 +50,14 @@ export function readConfiguration(filename: string): InternalConfig {
     s.setAttribute("app.heatmapImageFile", heatmapImageFile);
 
     const pixels = readImage(heatmapImageFile);
+    const bluenessToEventDensity = keysToNumbers(
+      configContent.heatmap.blueChannelToDensity
+    );
 
     return {
       heatmap: {
         attributesByRedness: rednessJson,
-        bluenessToEventDensity: keysToNumbers(
-          configContent.heatmap.blueChannelToDensity
-        ),
+        bluenessToEventDensity,
         pixels,
       },
       stackedGraph: HappyO11ydaysSGConfig,
@@ -76,6 +78,8 @@ function keysToNumbers(
   input: Record<string, number> | undefined
 ): Record<number, number> | undefined {
   if (input) {
-    Object.fromEntries(Object.entries(input).map(([k,v]) => [parseInt(k), v]))
+    return Object.fromEntries(
+      Object.entries(input).map(([k, v]) => [parseInt(k), v])
+    );
   } else return undefined;
 }
