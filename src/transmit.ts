@@ -83,7 +83,7 @@ export function sendSpans(
 }
 
 export function fetchNow() {
-  return spaninate("now", (s) => {
+  return spaninate("fetch now", (s) => {
     const result = Math.ceil(Date.now() / 1000);
     s.setAttribute("app.now", result.toString());
     return result;
