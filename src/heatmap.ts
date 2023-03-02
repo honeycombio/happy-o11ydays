@@ -1,5 +1,6 @@
 import { AttributesByRedness, populateAttributes } from "./bubbleUp";
 import { Pixel, Pixels } from "./image";
+import { spaninate } from "./tracing";
 
 /**
  * Draw an image using spans on a heatmap.
@@ -30,10 +31,13 @@ type RowInPng = number; // distance from the top of the png, in pixels. Int
 type HeatmapHeight = number; // the height we should heatmap on. float. NEVER a whole number
 
 export type HeatmapConfig = {
-  pixels: Pixels,
-  attributesByRedness: AttributesByRedness,
-}
-export function convertPixelsToSpans({ pixels, attributesByRedness}: HeatmapConfig) {
+  pixels: Pixels;
+  attributesByRedness: AttributesByRedness;
+};
+export function convertPixelsToSpans({
+  pixels,
+  attributesByRedness,
+}: HeatmapConfig) {
   const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
 
   const spansForColor = approximateColorByNumberOfSpans(visiblePixels);
@@ -61,21 +65,49 @@ export function convertPixelsToSpans({ pixels, attributesByRedness}: HeatmapConf
 export function approximateColorByNumberOfSpans(
   allPixels: Pixel[]
 ): (d: Pixel) => CountOfSpans {
-  const bluenesses = allPixels.map((p) => 255 - p.color.blue);
-  const maxBlueness = Math.max(...bluenesses);
-  const bluenessWidth = maxBlueness - Math.min(...bluenesses);
-  if (bluenessWidth === 0) {
-    // there is only one color. We only ever need to send 1 span.
-    return (d) => 1;
-  }
-  const maxSpansAtOnePoint = 10.0;
-  const increaseInSpansPerBlueness =
-    bluenessWidth === 0 ? 1 : (maxSpansAtOnePoint - 1) / bluenessWidth;
-  return (p: Pixel) =>
-    maxSpansAtOnePoint -
-    Math.round(
-      (maxBlueness - (255 - p.color.blue)) * increaseInSpansPerBlueness
+  return spaninate("decide how many pixels to send per color", (s) => {
+    const bluenesses = allPixels.map((p) => 255 - p.color.blue);
+    const distinctBluenesses = [...new Set(bluenesses)]
+      .filter((b) => b > 0)
+      .sort();
+    s.setAttribute("app.bluenesses", JSON.stringify(distinctBluenesses));
+
+    const maxSpansAtOnePoint = 10.0;
+
+    s.setAttribute("app.maxSpansAtOnePoint", maxSpansAtOnePoint);
+    if (distinctBluenesses.length > maxSpansAtOnePoint) {
+      // this function is suitable if there are many different bluenesses. Like if we shrunk a photo
+      const maxBlueness = Math.max(...distinctBluenesses);
+      const bluenessWidth = maxBlueness - Math.min(...distinctBluenesses);
+      if (bluenessWidth === 0) {
+        // there is only one color. We only ever need to send 1 span.
+        return (d) => 1;
+      }
+      const increaseInSpansPerBlueness =
+        bluenessWidth === 0 ? 1 : (maxSpansAtOnePoint - 1) / bluenessWidth;
+      const bluenessFunction = (b: number) =>
+        maxSpansAtOnePoint -
+        Math.round((maxBlueness - b) * increaseInSpansPerBlueness);
+
+      const bluenessToEventDensity: Record<number, number> = Object.fromEntries(
+        distinctBluenesses.map((b) => [b, bluenessFunction(b)])
+      );
+      s.setAttribute(
+        "app.bluenessDensityFunction",
+        JSON.stringify(bluenessToEventDensity)
+      );
+      // values for happy o11ydays: {"18":1,"46":3,"56":4,"71":5,"89":6,"143":10}
+      // https://ui.honeycomb.io/modernity/environments/spotcon/datasets/happy-o11ydays/trace/vYh3FTGMkTA?fields[]=c_name&fields[]=c_app.filename&span=23e440dbd2f979cc
+
+      return (p: Pixel) => bluenessFunction(255 - p.color.blue);
+    } else {
+    }
+    s.setAttribute(
+      "app.bluenessDensityFunction",
+      JSON.stringify(bluenessToEventDensity)
     );
+    return () => 0;
+  });
 }
 
 export function placeVerticallyInBuckets(
