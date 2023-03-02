@@ -185,6 +185,10 @@ function buildOnePicture<T extends HasTimeDelta>(
     waterfallImageSpans
   ) as Array<T & TraceSpanSpec>; // dammit typescript, i have spent too much time fighting you
 
+  waterfallImageSpecs3.forEach((ss) => {
+    (ss as any)["waterfallImageName"] = // add this field for tracing
+      waterfallImageDescription.waterfallImageName;
+  });
   return [
     {
       imageSpans: waterfallImageSpecs3,
