@@ -32,15 +32,20 @@ type HeatmapHeight = number; // the height we should heatmap on. float. NEVER a 
 
 export type HeatmapConfig = {
   pixels: Pixels;
+  bluenessToEventDensity?: Record<number, number>;
   attributesByRedness: AttributesByRedness;
 };
 export function convertPixelsToSpans({
   pixels,
   attributesByRedness,
+  bluenessToEventDensity,
 }: HeatmapConfig) {
   const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
 
-  const spansForColor = approximateColorByNumberOfSpans(visiblePixels);
+  const spansForColor = approximateColorByNumberOfSpans(
+    bluenessToEventDensity,
+    visiblePixels
+  );
   const heatmapHeight = placeVerticallyInBuckets(visiblePixels, pixels.height);
 
   // turn each pixel into some spans
@@ -63,6 +68,7 @@ export function convertPixelsToSpans({
 }
 
 export function approximateColorByNumberOfSpans(
+  bluenessToEventDensity: Record<number, number> | undefined,
   allPixels: Pixel[]
 ): (d: Pixel) => CountOfSpans {
   return spaninate("decide how many pixels to send per color", (s) => {
@@ -71,10 +77,15 @@ export function approximateColorByNumberOfSpans(
       .filter((b) => b > 0)
       .sort();
     s.setAttribute("app.bluenesses", JSON.stringify(distinctBluenesses));
+    s.setAttribute(
+      "app.configuredBluenessFunction",
+      JSON.stringify(bluenessToEventDensity || "none")
+    );
 
     const maxSpansAtOnePoint = 10.0;
 
     s.setAttribute("app.maxSpansAtOnePoint", maxSpansAtOnePoint);
+    s.setAttribute("app.distinctBluenessCount", distinctBluenesses.length);
     if (distinctBluenesses.length > maxSpansAtOnePoint) {
       // this function is suitable if there are many different bluenesses. Like if we shrunk a photo
       const maxBlueness = Math.max(...distinctBluenesses);

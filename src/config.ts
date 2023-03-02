@@ -25,7 +25,10 @@ export const HappyO11ydaysSGConfig = {
 };
 
 export type ExternalConfig = {
-  heatmap: { imageFile: string };
+  heatmap: {
+    imageFile: string;
+    blueChannelToDensity?: Record<string, number>;
+  };
 };
 
 export type InternalConfig = {
@@ -48,7 +51,13 @@ export function readConfiguration(filename: string): InternalConfig {
     const pixels = readImage(heatmapImageFile);
 
     return {
-      heatmap: { attributesByRedness: rednessJson, pixels },
+      heatmap: {
+        attributesByRedness: rednessJson,
+        bluenessToEventDensity: keysToNumbers(
+          configContent.heatmap.blueChannelToDensity
+        ),
+        pixels,
+      },
       stackedGraph: HappyO11ydaysSGConfig,
       waterfall: HappyO11ydaysConfig,
     };
@@ -62,4 +71,11 @@ function readJson(filename: string) {
     s.setAttribute("app.fileContent", data);
     return JSON.parse(data);
   });
+}
+function keysToNumbers(
+  input: Record<string, number> | undefined
+): Record<number, number> | undefined {
+  if (input) {
+    Object.fromEntries(Object.entries(input).map(([k,v]) => [parseInt(k), v]))
+  } else return undefined;
 }
