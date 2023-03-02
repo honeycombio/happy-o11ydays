@@ -1,4 +1,5 @@
 {
+  "greeting": "Happy O11ydays",
   "heatmap": {
     "imageFile": "dontpeek.png",
     "blueChannelToDensity": {

@@ -1,6 +1,10 @@
 {
+  "greeting": "Hello SPOTcon",
   "heatmap": {
     "imageFile": "spotcon.png"
+  },
+  "stackedGraph": {
+    "imageFile": "../house.png"
   },
   "waterfall": {
     "waterfallImages": [

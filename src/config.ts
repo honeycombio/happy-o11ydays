@@ -10,6 +10,7 @@ import path from "path";
 import { fetchNow, SendConfig } from "./transmit";
 
 export type ExternalConfig = {
+  greeting: string;
   heatmap: {
     imageFile: string;
     blueChannelToDensity?: Record<string, number>;
@@ -27,6 +28,7 @@ export type ExternalConfig = {
 };
 
 export type InternalConfig = {
+  greeting: string;
   heatmap: HeatmapConfig;
   stackedGraph: StackedGraphConfig;
   waterfall: WaterfallConfig;
@@ -74,6 +76,7 @@ export function readConfiguration(filename: string): InternalConfig {
     s.setAttribute("app.now", now);
 
     return {
+      greeting: configContent.greeting || "o11y o11y artistry",
       heatmap: {
         attributesByRedness: rednessJson,
         bluenessToEventDensity,

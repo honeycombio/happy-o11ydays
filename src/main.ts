@@ -10,8 +10,8 @@ import { spaninate, spaninateAsync } from "./tracing";
 import { InternalConfig, readConfiguration } from "./config";
 import { sendSpans } from "./transmit";
 
-const greeting = ` _________________ 
-< Happy O11ydays! >
+const greeting = (text: string) => ` _________________ 
+< ${text}! >
  ----------------- 
         \\   ^__^
          \\  (oo)\\_______
@@ -29,7 +29,7 @@ async function main(rootContext: Context, imageFile: string) {
   );
   await spaninateAsync("init dataset", initializeDataset);
 
-  spaninate("greet", () => console.log(greeting));
+  spaninate("greet", () => console.log(greeting(config.greeting)));
 
   const spanSpecs = spaninate("plan spans", () => planSpans(config));
 
