@@ -94,7 +94,7 @@ function printTraceLink(s: Span) {
     `Trace in jaeger: http://localhost:16686/trace/${s.spanContext().traceId}`
   );
   console.log(
-    `Trace in honeycomb:https://ui.honeycomb.io/modernity/environments/spotcon/datasets/happy-o11ydays/trace?trace_id=${
+    `Trace in honeycomb: https://ui.honeycomb.io/modernity/environments/spotcon/datasets/happy-o11ydays/trace?trace_id=${
       s.spanContext().traceId
     }`
   );
