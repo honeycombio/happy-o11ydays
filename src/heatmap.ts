@@ -73,9 +73,7 @@ export function approximateColorByNumberOfSpans(
 ): (d: Pixel) => CountOfSpans {
   return spaninate("decide how many pixels to send per color", (s) => {
     const bluenesses = allPixels.map((p) => 255 - p.color.blue);
-    const distinctBluenesses = [...new Set(bluenesses)]
-      .filter((b) => b > 0)
-      .sort();
+    const distinctBluenesses = [...new Set(bluenesses)].sort();
     s.setAttribute("app.bluenesses", JSON.stringify(distinctBluenesses));
     s.setAttribute(
       "app.configuredBluenessFunction",
