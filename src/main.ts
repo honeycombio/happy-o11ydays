@@ -96,6 +96,7 @@ function sendSpans(rootContext: Context, spanSpecs: SpanSpec[]): SpanContext {
       var openSpan: Span = rootSpan; // so that I can add events to it
       var openSpanEndTime: HrTime | undefined = undefined; // so that I can end that openSpan correctly
       spanSpecs.forEach((ss, _spanNumber) => {
+        ss["begin"] = begin; // this is handy for sorting the traces by how recently they were created.
         const startTime = placeHorizontallyInBucket(
           begin,
           ss.time_delta,
