@@ -68,7 +68,7 @@ export function convertPixelsToSpans({
 }
 
 export function approximateColorByNumberOfSpans(
-  bluenessToEventDensity: Record<number, number> | undefined,
+  inputBluenessToEventDensity: Record<number, number> | undefined,
   allPixels: Pixel[]
 ): (d: Pixel) => CountOfSpans {
   return spaninate("decide how many pixels to send per color", (s) => {
@@ -79,50 +79,57 @@ export function approximateColorByNumberOfSpans(
     s.setAttribute("app.bluenesses", JSON.stringify(distinctBluenesses));
     s.setAttribute(
       "app.configuredBluenessFunction",
-      JSON.stringify(bluenessToEventDensity || "none")
+      JSON.stringify(inputBluenessToEventDensity || "none")
     );
 
-    const maxSpansAtOnePoint = 10.0;
-
-    s.setAttribute("app.maxSpansAtOnePoint", maxSpansAtOnePoint);
     s.setAttribute("app.distinctBluenessCount", distinctBluenesses.length);
-    if (distinctBluenesses.length > maxSpansAtOnePoint) {
-      // this function is suitable if there are many different bluenesses. Like if we shrunk a photo
-      const maxBlueness = Math.max(...distinctBluenesses);
-      const bluenessWidth = maxBlueness - Math.min(...distinctBluenesses);
-      if (bluenessWidth === 0) {
-        // there is only one color. We only ever need to send 1 span.
-        return (d) => 1;
-      }
-      const increaseInSpansPerBlueness =
-        bluenessWidth === 0 ? 1 : (maxSpansAtOnePoint - 1) / bluenessWidth;
-      const bluenessFunction = (b: number) =>
-        maxSpansAtOnePoint -
-        Math.round((maxBlueness - b) * increaseInSpansPerBlueness);
-
-      const bluenessToEventDensity: Record<number, number> = Object.fromEntries(
-        distinctBluenesses.map((b) => [b, bluenessFunction(b)])
-      );
-      s.setAttribute(
-        "app.bluenessDensityFunction",
-        JSON.stringify(bluenessToEventDensity)
-      );
-      // values for happy o11ydays: {"18":1,"46":3,"56":4,"71":5,"89":6,"143":10}
-      // https://ui.honeycomb.io/modernity/environments/spotcon/datasets/happy-o11ydays/trace/vYh3FTGMkTA?fields[]=c_name&fields[]=c_app.filename&span=23e440dbd2f979cc
-
-      return (p: Pixel) => bluenessFunction(255 - p.color.blue);
-    } else {
-      const bluenessToEventDensity: Record<number, number> = Object.fromEntries(
-        distinctBluenesses.map((b, i) => [b, i + 1])
-      );
-      s.setAttribute(
-        "app.bluenessDensityFunction",
-        JSON.stringify(bluenessToEventDensity)
-      );
-
-      return (p) => bluenessToEventDensity[255 - p.color.blue];
+    if (distinctBluenesses.length === 1) {
+      // there is only one color, so one span per dot
+      return (p) => 1;
     }
+
+    const maxSpansAtOnePoint = 10.0;
+    s.setAttribute("app.maxSpansAtOnePoint", maxSpansAtOnePoint);
+    const derivedBluenessToEventDensity: Record<number, number> =
+      distinctBluenesses.length > maxSpansAtOnePoint
+        ? calculateDensitySmoothly(maxSpansAtOnePoint, distinctBluenesses)
+        : incrementEventDensity(distinctBluenesses);
+    s.setAttribute(
+      "app.derivedBluenessDensityFunction",
+      JSON.stringify(derivedBluenessToEventDensity)
+    );
+    const bluenessToEventDensity = {
+      ...derivedBluenessToEventDensity,
+      ...(inputBluenessToEventDensity || {}), // if they configured one, that takes precedence
+    };
+    s.setAttribute(
+      "app.bluenessDensityFunction",
+      JSON.stringify(derivedBluenessToEventDensity)
+    );
+
+    return (p) => bluenessToEventDensity[255 - p.color.blue];
   });
+}
+
+function incrementEventDensity(distinctBluenesses: number[]) {
+  return Object.fromEntries(distinctBluenesses.map((b, i) => [b, i + 1]));
+}
+
+function calculateDensitySmoothly(
+  maxSpansAtOnePoint: number,
+  distinctBluenesses: number[]
+): Record<number, number> {
+  const maxBlueness = Math.max(...distinctBluenesses);
+  const bluenessWidth = maxBlueness - Math.min(...distinctBluenesses);
+  const increaseInSpansPerBlueness =
+    bluenessWidth === 0 ? 1 : (maxSpansAtOnePoint - 1) / bluenessWidth;
+  const bluenessFunction = (b: number) =>
+    maxSpansAtOnePoint -
+    Math.round((maxBlueness - b) * increaseInSpansPerBlueness);
+
+  return Object.fromEntries(
+    distinctBluenesses.map((b) => [b, bluenessFunction(b)])
+  );
 }
 
 export function placeVerticallyInBuckets(
