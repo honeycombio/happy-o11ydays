@@ -40,7 +40,7 @@ async function main(rootContext: Context, imageFile: string) {
   const spanSpecs = spaninate("plan spans", () => planSpans(config));
 
   const sentSpanContext = spaninate("send spans", () =>
-    sendSpans(rootContext, spanSpecs)
+    sendSpans({}, rootContext, spanSpecs)
   );
   tracer
     .startSpan("link to trace", { links: [{ context: sentSpanContext }] })
@@ -71,20 +71,24 @@ function planSpans(config: InternalConfig): SpanSpec[] {
   return spanSpecs;
 }
 
-function fetchCurrentDate() {
+function fetchCurrentDate(config: SendConfig) {
   return spaninate("now", (s) => {
-    const result = Math.ceil(Date.now() / 1000);
+    const result = config.now || Math.ceil(Date.now() / 1000);
     s.setAttribute("app.now", result.toString());
     return result;
   });
 }
 
 type SendConfig = { now?: SecondsSinceEpoch };
-function sendSpans(rootContext: Context, spanSpecs: SpanSpec[]): SpanContext {
+function sendSpans(
+  config: SendConfig,
+  rootContext: Context,
+  spanSpecs: SpanSpec[]
+): SpanContext {
   const executionSpan = otel.trace.getActiveSpan()!;
   executionSpan.setAttribute("app.spanCount", spanSpecs.length);
   const tracer = otel.trace.getTracer("o11y o11y artistry");
-  const begin: SecondsSinceEpoch = fetchCurrentDate();
+  const begin: SecondsSinceEpoch = fetchCurrentDate(config);
   const earliestTimeDelta = Math.min(...spanSpecs.map((s) => s.time_delta));
   // the root span has no height, so it doesn't appear in the heatmap
   return tracer.startActiveSpan(
