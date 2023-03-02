@@ -1,19 +1,13 @@
 import { sdk } from "./initialize-tracing";
 import { Pixels, readImage } from "./image";
 
-import otel, { Context, Span, SpanContext } from "@opentelemetry/api";
+import otel, { Context } from "@opentelemetry/api";
 import { checkAuthorization, findLinkToDataset } from "./honeyApi";
-import {
-  placeHorizontallyInBucket,
-  SecondsSinceEpoch,
-  HeatmapSpanSpec,
-  planEndTime,
-  HrTime,
-  convertPixelsToSpans,
-} from "./heatmap";
+import { HeatmapSpanSpec, convertPixelsToSpans } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
 import { buildPicturesInWaterfall, TraceSpanSpec } from "./waterfall";
+import { sendSpans } from "./transmit";
 
 const greeting = ` _________________ 
 < Happy O11ydays! >
@@ -35,14 +29,9 @@ async function main(rootContext: Context, imageFile: string) {
 
   const spanSpecs = planSpans(pixels);
 
-  const traceId = sendSpans(rootContext, spanSpecs);
+  const sentSpanContext = sendSpans(rootContext, spanSpecs);
 
-  const link = await findLinkToDataset(traceId);
-  console.log("  Run a new query for HEATMAP(height) in this dataset: " + link);
-
-  console.log(
-    "  Check the README for how to get the query just right, and see the picture, and then investigate it!\n"
-  );
+  const url = await findLinkToDataset(sentSpanContext.traceId);
   console.log("  Oh look, I drew a picture: " + url + "\n");
 }
 

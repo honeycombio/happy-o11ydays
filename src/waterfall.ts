@@ -38,7 +38,7 @@ const nothingSpecialOnTheWaterfall = {
  * Represent the span with a color containing blue, but no red.
  * Represent a sparkle with any amount of red.
  */
-type ImageSource = { filename: string; };
+type ImageSource = { filename: string };
 const IMAGE_SOURCES = [
   Array(10).fill({
     filename: "input/bigger-tree.png",
@@ -176,14 +176,13 @@ function buildOnePicture<T extends HasTimeDelta>(
     waterfallImageSpans
   ) as Array<T & TraceSpanSpec>; // dammit typescript, i have spent too much time fighting you
 
-    return [
-      {
-        imageSpans: waterfallImageSpecs3,
-        rest: availableSpans,
-      },
-      null,
-    ];
-  });
+  return [
+    {
+      imageSpans: waterfallImageSpecs3,
+      rest: availableSpans,
+    },
+    null,
+  ];
 }
 
 function maxIncrementThatMightStillFit(
