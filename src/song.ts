@@ -1,6 +1,5 @@
 import fs from "fs";
 import { spaninate } from "./tracing";
-import otel from "@opentelemetry/api";
 
 const verseMarker = "🎼";
 export class SpanSong {

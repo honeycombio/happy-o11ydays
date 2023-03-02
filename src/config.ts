@@ -8,18 +8,6 @@ import { spaninate } from "./tracing";
 import fs from "fs";
 import path from "path";
 
-export const HappyO11ydaysConfig: WaterfallConfig = {
-  waterfallImages: [
-    { filename: "input/bigger-tree.png", maxCount: 10 },
-    { filename: "input/tiny-tree.png", maxCount: 1 },
-    { filename: "input/bee.png", maxCount: 1 },
-    { filename: "input/ornament.png", maxCount: 20 },
-  ],
-  song: {
-    lyricsFile: "input/song.txt",
-  },
-};
-
 export const HappyO11ydaysSGConfig = {
   imageFilename: "input/house.png",
 };
@@ -28,6 +16,10 @@ export type ExternalConfig = {
   heatmap: {
     imageFile: string;
     blueChannelToDensity?: Record<string, number>;
+  };
+  waterfall: {
+    waterfallImages: { filename: string; maxCount: number }[];
+    song: { lyricsFile: string };
   };
 };
 
@@ -61,7 +53,7 @@ export function readConfiguration(filename: string): InternalConfig {
         pixels,
       },
       stackedGraph: HappyO11ydaysSGConfig,
-      waterfall: HappyO11ydaysConfig,
+      waterfall: configContent.waterfall,
     };
   });
 }
