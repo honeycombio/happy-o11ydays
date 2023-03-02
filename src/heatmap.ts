@@ -1,6 +1,7 @@
 import { AttributesByRedness, populateAttributes } from "./bubbleUp";
 import { Pixel, Pixels } from "./image";
 import { spaninate } from "./tracing";
+import otel from "@opentelemetry/api";
 
 /**
  * Draw an image using spans on a heatmap.
@@ -102,7 +103,7 @@ export function approximateColorByNumberOfSpans(
     };
     s.setAttribute(
       "app.bluenessDensityFunction",
-      JSON.stringify(derivedBluenessToEventDensity)
+      JSON.stringify(bluenessToEventDensity)
     );
 
     return (p) => bluenessToEventDensity[255 - p.color.blue];
@@ -110,6 +111,9 @@ export function approximateColorByNumberOfSpans(
 }
 
 function incrementEventDensity(distinctBluenesses: number[]) {
+  otel.trace
+    .getActiveSpan()
+    ?.setAttribute("app.bluenessCalculationStrategy", "increment");
   return Object.fromEntries(distinctBluenesses.map((b, i) => [b, i + 1]));
 }
 
@@ -117,6 +121,9 @@ function calculateDensitySmoothly(
   maxSpansAtOnePoint: number,
   distinctBluenesses: number[]
 ): Record<number, number> {
+  otel.trace
+    .getActiveSpan()
+    ?.setAttribute("app.bluenessCalculationStrategy", "smooth");
   const maxBlueness = Math.max(...distinctBluenesses);
   const bluenessWidth = maxBlueness - Math.min(...distinctBluenesses);
   const increaseInSpansPerBlueness =
