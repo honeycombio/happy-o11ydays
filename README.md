@@ -213,12 +213,31 @@ Create an image that is:
 - up to 100 pixels wide (wider is OK, but 100 is nice for a ten-minute time range)
 - with a white and/or transparent background
 - containing a picture in shades of blue (red and green components are ignored)
-- but no more than 10 shades of blue
+- ideally no more than 10 shades of blue
 
-and then run this program like
+Put that image in the 'input' directory. Then change `input/happyO11ydays.json`, and put your
+filename in the `heatmap.imageFile` attribute.
 
-`./run path/to/your-image.png`
+There's other configuration in there; you're free to change the images that it tries to draw
+in the stacked graph and in the trace. You can also provide text to put in the span names of the trace.
+These have very persnickety limitations that are not yet documented.
+
+Run this program again.
 
 Now go do the HEATMAP(height) and see what it looks like. Tweet a screenshot at @honeycombio please!
 
 [Blackbird poem](https://www.poetryfoundation.org/poems/45236/thirteen-ways-of-looking-at-a-blackbird)
+
+## Observe this program
+
+Each run emits two traces: the entertaining one, which builds the heatmap and a picture in the trace.
+The `./run` script sends them directly to Honeycomb.
+
+You can send them to a local collector, which will send them to both Honeycomb and a local Jaeger instance.
+To run a local collector and Jaeger:
+
+`docker compose up`
+
+and then use this script:
+
+`./run-local`
