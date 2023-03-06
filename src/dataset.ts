@@ -16,7 +16,7 @@ export async function initializeDataset() {
   if (existingDataset.status === 404) {
     return createDataset(apiKey, dataset);
   } else if (existingDataset.status === 200) {
-    console.log(`Dataset ${dataset} exists, ok`);
+    // console.log(`Dataset ${dataset} exists, ok`);
   } else {
     console.log(
       "WARNING: Failed to check for dataset: " + existingDataset.status

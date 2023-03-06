@@ -166,7 +166,7 @@ To make it testable, I also want to find the other places where the program inte
 Like date.now, where is that called?
 I'm going to put a span around that, so I can move it left too.
 
-````
+```
 export function fetchNow() {
   return spaninate("fetch now", () => {
     return Math.ceil(Date.now() / 1000);
@@ -211,8 +211,6 @@ Code that isn't part of a symmathesy, a learning system made of learning parts, 
 So teach the code how to teach you how to teach it new tricks...
 yes it's a big spiral into the future.
 
+```
 
-
-
-
-````
+```
