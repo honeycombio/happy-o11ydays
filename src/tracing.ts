@@ -1,10 +1,16 @@
 import otel, { Span } from "@opentelemetry/api";
+import ErrorStackParser from "error-stack-parser";
 
 const tracer = otel.trace.getTracer("not the art, but the artist");
 
 export function spaninate<R>(name: string, cb: (s: Span) => R): R {
+  const stack = ErrorStackParser.parse(new Error("BOOM"));
+  const where = stack[1].source;
   return tracer.startActiveSpan(name, (s) => {
     try {
+      if (where) {
+        s.setAttribute("debug.location", where);
+      }
       return cb(s);
     } catch (e) {
       s.recordException(e as Error);
