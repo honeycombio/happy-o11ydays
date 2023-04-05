@@ -81,7 +81,8 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
     }
   );
 
-  //shuffleRoots(result.imageSpans); // mutates
+  spaninate("shuffle roots", () => shuffleRoots(result.imageSpans)); // mutates
+  incrementRoots(result.imageSpans); // mutates
   const imageSpans = assignNames(config.song, result.imageSpans);
   const leftoversAsSpanEvents = result.rest.map((s) => ({
     ...s,
@@ -134,6 +135,26 @@ function shuffleRoots<T extends HasTimeDelta>(
   imagesInWaterfall.forEach((imageRows, i) => (imageRows[0] = roots[i]));
 }
 
+function incrementRoots<T extends HasTimeDelta & TraceSpanSpec>(
+  imagesInWaterfall: Array<Array<T>>
+) {
+  spaninate("increment roots", (s) => {
+    const roots = imagesInWaterfall.map((ii) => ii[0]);
+    roots.sort((r1, r2) => r2.time_delta - r1.time_delta);
+    s.setAttribute(
+      "app.rootTimeDeltas",
+      roots.map((r) => r.time_delta).join(",")
+    );
+    for (var i = 1; i < roots.length; i++) {
+      const prevRoot = roots[i - 1];
+      const root = roots[i];
+      if (prevRoot.time_delta === root.time_delta) {
+        root.increment = prevRoot.increment + 1;
+      }
+    }
+  }); // mutates
+}
+
 type WaterfallImageDescription = {
   rows: WaterfallImageRow[];
   waterfallImageName: string;
@@ -184,6 +205,7 @@ function buildOnePicture<T extends HasTimeDelta>(
     }
 
     const { waterfallImageSpans, availableSpans } = finalFitResult;
+    s.setAttribute("app.waterfallImageSpanCount", waterfallImageSpans.length);
     // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
 
     const waterfallImageSpecs3 = determineTreeStructure(
