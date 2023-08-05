@@ -1,6 +1,7 @@
-import { Pixel, Pixels, readImage } from "./image";
+import { Pixel, Pixels } from "./image";
 import { SpanSong } from "./song";
 import { spaninate } from "./tracing";
+import otel from "@opentelemetry/api";
 
 type HasTimeDelta = { time_delta: DistanceFromRight };
 export type FractionOfGranularity = number;
@@ -63,10 +64,13 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   config: WaterfallConfig,
   spans: T[]
 ): Array<T & TraceSpanSpec> {
+  const span = otel.trace.getActiveSpan();
+  span?.setAttribute("app.waterfallConfig", JSON.stringify(config));
+
   const result = reduceUntilStop(
     fetchImageSources(config.waterfallImages),
     (resultsSoFar, img, i) => {
-      const [newResult, err] = buildOnePicture(resultsSoFar.rest, img);
+      const [newResult, err] = buildOnePicture(resultsSoFar.rest, img, i);
       if (err) {
         return "stop";
       }
@@ -101,10 +105,12 @@ function assignNames<T extends HasTimeDelta & TraceSpanSpec>(
     return a[0].time_delta - b[0].time_delta;
   }
   images.sort(byRootStartTime);
+  otel.trace.getActiveSpan()?.setAttribute("app.songLyrics", config.songLyrics);
   const song = new SpanSong(config.songLyrics);
   images.forEach((im, i1) => {
     im.forEach((s, i2) => {
       if (!s.spanEvent) {
+        (s as any)["app.songLocation"] = song.whereAmI();
         s.name = song.nameThisSpan();
       }
     });
@@ -179,9 +185,15 @@ type BuildOnePictureOutcome<T extends HasTimeDelta> = [
 
 function buildOnePicture<T extends HasTimeDelta>(
   spans: T[],
-  waterfallImageDescription: WaterfallImageDescription
+  waterfallImageDescription: WaterfallImageDescription,
+  pictureID: number
 ): BuildOnePictureOutcome<T> {
   return spaninate("build one picture", (s) => {
+    s.setAttribute(
+      "app.waterfallImageDescription",
+      JSON.stringify(waterfallImageDescription)
+    );
+    s.setAttribute("app.pictureID", pictureID);
     const maxIncrement = maxIncrementThatMightStillFit(
       spans,
       waterfallImageDescription.rows
@@ -212,9 +224,11 @@ function buildOnePicture<T extends HasTimeDelta>(
       waterfallImageSpans
     ) as Array<T & TraceSpanSpec>; // dammit typescript, i have spent too much time fighting you
 
-    waterfallImageSpecs3.forEach((ss) => {
-      (ss as any)["waterfallImageName"] = // add this field for tracing
+    waterfallImageSpecs3.forEach((ss, i) => {
+      (ss as any)["waterfallImageName"] = // add these fields for tracing
         waterfallImageDescription.waterfallImageName;
+      (ss as any)["waterfallPictureID"] = pictureID;
+      (ss as any)["waterfallPosition"] = `Line ${i} in Picture ${pictureID}`;
     });
     return [
       {
