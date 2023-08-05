@@ -1,5 +1,6 @@
 {
   "greeting": "Hello Chicago",
+  "randomSeed": 1691276581423,
   "heatmap": {
     "imageFile": "dod-logo-heatmap.png",
     "blueChannelToDensity": {
