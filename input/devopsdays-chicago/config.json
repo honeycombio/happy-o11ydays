@@ -1,0 +1,21 @@
+{
+  "greeting": "Hello Chicago",
+  "heatmap": {
+    "imageFile": "dod-logo.png"
+  },
+  "stackedGraph": {
+    "imageFile": "../house.png"
+  },
+  "waterfall": {
+    "waterfallImages": [
+      { "filename": "bird.png", "maxCount": 1 },
+      { "filename": "circle.png", "maxCount": 1 },
+      { "filename": "mountain.png", "maxCount": 4 },
+      { "filename": "icicle.png", "maxCount": 5 },
+      { "filename": "tree-with-blackbirds.png", "maxCount": 7 }
+    ],
+    "song": {
+      "lyricsFile": "poem.txt"
+    }
+  }
+}

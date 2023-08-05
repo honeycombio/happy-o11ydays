@@ -21,7 +21,7 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-https://api.ho
 export OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-happy-o11ydays}
 export OTEL_EXPORTER_OTLP_HEADERS="x-honeycomb-team=$HONEYCOMB_API_KEY"
 
-export OTEL_SPAN_EVENT_COUNT_LIMIT=4000 # super necessary
+export OTEL_SPAN_EVENT_COUNT_LIMIT=7000 # super necessary
 
 # I want "npm start" to run this script
 npm run activate $*
