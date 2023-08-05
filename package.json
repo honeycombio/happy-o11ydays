@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "./run",
-    "activate": "tsc && node src/main.js"
+    "activate": "tsc && node src/main.js",
+    "setup": "tsc && node src/setup.js "
   },
   "author": "",
   "license": "ISC",

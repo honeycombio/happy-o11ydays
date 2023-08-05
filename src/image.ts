@@ -28,6 +28,20 @@ export class Color {
     public alpha: ZeroTo255
   ) {}
 
+  // construct a new opaque Color from a string like "#8ed2b9"
+  public static fromHex(hex: string) {
+    // code from chatgpt
+    hex = hex.charAt(0) === "#" ? hex.slice(1) : hex;
+
+    // Parse r, g, b values
+    let bigint = parseInt(hex, 16);
+    let r = (bigint >> 16) & 255;
+    let g = (bigint >> 8) & 255;
+    let b = bigint & 255;
+
+    return new Color(r, g, b, 255);
+  }
+
   public darkness(): number {
     // all the colors' distance from white; reduced if not fully opaque
     return (
@@ -123,12 +137,10 @@ function writeImage(png: PNG, filename: string) {
 
 export function readImage(imageFile: string) {
   const pixels = new Pixels(readPng(imageFile));
-  otel.trace
-    .getActiveSpan()
-    ?.setAttributes({
-      "app.imageHeight": pixels.height,
-      "app.imageWidth": pixels.width,
-    });
+  otel.trace.getActiveSpan()?.setAttributes({
+    "app.imageHeight": pixels.height,
+    "app.imageWidth": pixels.width,
+  });
 
   return pixels;
 }
