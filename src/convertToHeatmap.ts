@@ -49,35 +49,28 @@ export function approximateColorByNumberOfSpans(
   allPixels: Pixel[]
 ): (d: Pixel) => CountOfSpans {
   return spaninate("decide how many pixels to send per color", (s) => {
-    const bluenesses = allPixels.map((p) => 255 - p.color.blue);
-    const distinctBluenesses = [...new Set(bluenesses)].sort();
-    s.setAttribute("app.bluenesses", JSON.stringify(distinctBluenesses));
+    const darknesses = allPixels.map((p) => 255 - p.color.darkness());
+    const distinctDarknesses = [...new Set(darknesses)].sort();
+    s.setAttribute("app.darknesses", JSON.stringify(distinctDarknesses));
 
-    s.setAttribute("app.distinctBluenessCount", distinctBluenesses.length);
-    if (distinctBluenesses.length === 1) {
+    s.setAttribute("app.distinctDarknessCount", distinctDarknesses.length);
+    if (distinctDarknesses.length === 1) {
       // there is only one color, so one span per dot
       return (p) => 1;
     }
 
     const maxSpansAtOnePoint = 10.0;
     s.setAttribute("app.maxSpansAtOnePoint", maxSpansAtOnePoint);
-    const derivedBluenessToEventDensity: Record<number, number> =
-      distinctBluenesses.length > maxSpansAtOnePoint
-        ? calculateDensitySmoothly(maxSpansAtOnePoint, distinctBluenesses)
-        : incrementEventDensity(distinctBluenesses);
+    const derivedDarknessToEventDensity: Record<number, number> =
+      distinctDarknesses.length > maxSpansAtOnePoint
+        ? calculateDensitySmoothly(maxSpansAtOnePoint, distinctDarknesses)
+        : incrementEventDensity(distinctDarknesses);
     s.setAttribute(
-      "app.derivedBluenessDensityFunction",
-      JSON.stringify(derivedBluenessToEventDensity)
-    );
-    const bluenessToEventDensity = {
-      ...derivedBluenessToEventDensity,
-    };
-    s.setAttribute(
-      "app.bluenessDensityFunction",
-      JSON.stringify(bluenessToEventDensity)
+      "app.derivedDarknessDensityFunction",
+      JSON.stringify(derivedDarknessToEventDensity)
     );
 
-    return (p) => bluenessToEventDensity[255 - p.color.blue];
+    return (p) => derivedDarknessToEventDensity[255 - p.color.darkness()];
   });
 }
 
