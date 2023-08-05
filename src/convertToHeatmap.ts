@@ -19,6 +19,7 @@ type CountOfSpans = number; // 0 to maxSpansAtOnePoint
 
 // this constant is copied from Poodle
 export const HISTOGRAM_COLOR_RANGE_OLD = [
+  "#ffffff", // 0 spans means white
   "#8ed2b9",
   "#4fb6bd",
   "#3ba2ba",
@@ -38,7 +39,7 @@ export function convertPixelsToWhatItsGonnaLookLike(pixels: Pixels) {
   visiblePixels
     .map((p) =>
       p.withColor(
-        Color.fromHex(HISTOGRAM_COLOR_RANGE_OLD[spansForColor(p) - 1])
+        Color.fromHex(HISTOGRAM_COLOR_RANGE_OLD[spansForColor(p)])
       )
     )
     .map((p) => pixels.overwrite(p));
@@ -81,22 +82,25 @@ function incrementEventDensity(distinctBluenesses: number[]) {
   return Object.fromEntries(distinctBluenesses.map((b, i) => [b, i + 1]));
 }
 
+// returns a function expressed as a map, with
+// range: each number in distinctDarknesses
+// domain: integers from [0, maxSpansAtOnePoint]
 function calculateDensitySmoothly(
   maxSpansAtOnePoint: number,
-  distinctBluenesses: number[]
+  distinctDarknesses: number[]
 ): Record<number, number> {
   otel.trace
     .getActiveSpan()
     ?.setAttribute("app.bluenessCalculationStrategy", "smooth");
-  const maxBlueness = Math.max(...distinctBluenesses);
-  const bluenessWidth = maxBlueness - Math.min(...distinctBluenesses);
+  const maxBlueness = Math.max(...distinctDarknesses);
+  const bluenessWidth = maxBlueness;
   const increaseInSpansPerBlueness =
-    bluenessWidth === 0 ? 1 : (maxSpansAtOnePoint - 1) / bluenessWidth;
+    bluenessWidth === 0 ? 1 : (maxSpansAtOnePoint) / bluenessWidth;
   const bluenessFunction = (b: number) =>
     maxSpansAtOnePoint -
     Math.round((maxBlueness - b) * increaseInSpansPerBlueness);
 
   return Object.fromEntries(
-    distinctBluenesses.map((b) => [b, bluenessFunction(b)])
+    distinctDarknesses.map((b) => [b, bluenessFunction(b)])
   );
 }
