@@ -2,7 +2,7 @@ class SeededRandom {
   private seed: number;
 
   constructor(seed: number) {
-    this.seed = seed >>> 0; // Ensure the seed is an unsigned 32-bit integer
+    this.seed = seed;
   }
 
   // http://indiegamr.com/generate-repeatable-random-numbers-in-js/
