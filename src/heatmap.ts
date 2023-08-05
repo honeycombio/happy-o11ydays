@@ -58,6 +58,7 @@ export function convertPixelsToSpans({
         .map((_) => ({
           ...p.asFlatJson(), // add all the fields, for observability ;-)
           spans_at_once,
+          "app.spans_at_once": spans_at_once,
           time_delta: p.location.x - pixels.width,
           height: heatmapHeight(p.location.y), // make it noninteger, so hny knows this is a float field
           ...populateAttributes(attributesByRedness, p), // for bubble up
