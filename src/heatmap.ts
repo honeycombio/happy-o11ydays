@@ -39,40 +39,6 @@ export type HeatmapConfig = {
 
 // This bit is a utility to convert your PNG to what it will look like on a heatmap
 
-// this constant is copied from Poodle
-export const HISTOGRAM_COLOR_RANGE_OLD = [
-  "#8ed2b9",
-  "#4fb6bd",
-  "#3ba2ba",
-  "#278fb8",
-  "#137fb5",
-  "#2769ae",
-  "#3758a7",
-  "#42439a",
-  "#3b287d",
-  "#320656",
-];
-export function convertPixelsToWhatItsGonnaLookLike({
-  pixels,
-  bluenessToEventDensity,
-}: HeatmapConfig) {
-  const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
-
-  const spansForColor = approximateColorByNumberOfSpans(
-    bluenessToEventDensity,
-    visiblePixels
-  );
-
-  visiblePixels
-    .map((p) =>
-      p.withColor(
-        Color.fromHex(HISTOGRAM_COLOR_RANGE_OLD[spansForColor(p) - 1])
-      )
-    )
-    .map((p) => pixels.overwrite(p));
-  pixels.writeToFile("heatmap-version.png");
-}
-
 export function convertPixelsToSpans({
   pixels,
   attributesByRedness,

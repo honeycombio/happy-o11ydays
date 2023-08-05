@@ -1,7 +1,7 @@
 import { sdk } from "./initialize-tracing";
 
 import otel, { Context, Span } from "@opentelemetry/api";
-import { convertPixelsToWhatItsGonnaLookLike } from "./heatmap";
+import { convertPixelsToWhatItsGonnaLookLike } from "./convertToHeatmap";
 import { spaninate } from "./tracing";
 import { InternalConfig, readConfiguration } from "./config";
 
@@ -25,7 +25,7 @@ async function main(rootContext: Context, imageFile: string) {
 
 function convertImage(config: InternalConfig) {
   spaninate("convert pixels to spans", () =>
-    convertPixelsToWhatItsGonnaLookLike(config.heatmap)
+    convertPixelsToWhatItsGonnaLookLike(config.heatmap.pixels)
   );
 }
 
