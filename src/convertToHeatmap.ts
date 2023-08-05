@@ -18,30 +18,22 @@ type CountOfSpans = number; // 0 to maxSpansAtOnePoint
 // This bit is a utility to convert your PNG to what it will look like on a heatmap
 
 // this constant is copied from Poodle
-export const HISTOGRAM_COLOR_RANGE_OLD = [
-  "#ffffff", // 0 spans means white
-  "#8ed2b9",
-  "#4fb6bd",
-  "#3ba2ba",
-  "#278fb8",
-  "#137fb5",
-  "#2769ae",
-  "#3758a7",
-  "#42439a",
-  "#3b287d",
-  "#320656",
-];
-export function convertPixelsToWhatItsGonnaLookLike(pixels: Pixels) {
+
+export type ConvertPixelsInput = {
+  pixels: Pixels;
+  histogramColors: string[]; // 11 hex colors, starting with white
+};
+
+export function convertPixelsToWhatItsGonnaLookLike({
+  pixels,
+  histogramColors,
+}: ConvertPixelsInput) {
   const visiblePixels = pixels.all().filter((p) => p.color.darkness() > 0);
 
   const spansForColor = approximateColorByNumberOfSpans(visiblePixels);
 
   visiblePixels
-    .map((p) =>
-      p.withColor(
-        Color.fromHex(HISTOGRAM_COLOR_RANGE_OLD[spansForColor(p)])
-      )
-    )
+    .map((p) => p.withColor(Color.fromHex(histogramColors[spansForColor(p)])))
     .map((p) => pixels.overwrite(p));
   pixels.writeToFile("heatmap-version.png"); // TODO: move this to main
 }
@@ -60,7 +52,7 @@ export function approximateColorByNumberOfSpans(
       return (p) => 1;
     }
 
-    const maxSpansAtOnePoint = 10.0;
+    const maxSpansAtOnePoint = 10.0; // this is tied to the length of histogramColors
     s.setAttribute("app.maxSpansAtOnePoint", maxSpansAtOnePoint);
     const derivedDarknessToEventDensity: Record<number, number> =
       distinctDarknesses.length > maxSpansAtOnePoint
@@ -95,7 +87,7 @@ function calculateDensitySmoothly(
   const maxBlueness = Math.max(...distinctDarknesses);
   const bluenessWidth = maxBlueness;
   const increaseInSpansPerBlueness =
-    bluenessWidth === 0 ? 1 : (maxSpansAtOnePoint) / bluenessWidth;
+    bluenessWidth === 0 ? 1 : maxSpansAtOnePoint / bluenessWidth;
   const bluenessFunction = (b: number) =>
     maxSpansAtOnePoint -
     Math.round((maxBlueness - b) * increaseInSpansPerBlueness);
