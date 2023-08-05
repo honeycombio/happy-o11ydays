@@ -50,7 +50,9 @@ async function main(rootContext: Context, imageFile: string) {
 function bluenessToDensityFunction(histogramColors: string[]) {
   const result: Record<number, number> = {};
   // i don't remember how to do the clever reduce-to-object in js, whatevs
-  histogramColors.forEach((hex, n) => (result[n] = Color.fromHex(hex).blue));
+  histogramColors.forEach(
+    (hex, n) => (result[Color.fromHex(hex).blue] = n + 1)
+  );
   return result;
 }
 
