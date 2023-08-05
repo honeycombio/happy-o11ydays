@@ -23,37 +23,25 @@ const greeting = (text: string) => ` _________________
 async function main(rootContext: Context, imageFile: string) {
   const config = readConfiguration(imageFile);
 
-  const authData = await spaninateAsync(
-    "check authorization",
-    checkAuthorization
-  );
+  const authData = await spaninateAsync("check authorization", checkAuthorization);
+
   await spaninateAsync("init dataset", initializeDataset);
 
   spaninate("greet", () => console.log(greeting(config.greeting)));
 
   const spanSpecs = spaninate("plan spans", () => planSpans(config));
 
-  const sentSpanContext = spaninate("send spans", () =>
-    sendSpans(config.transmit, rootContext, spanSpecs)
-  );
-  tracer
-    .startSpan("link to trace", { links: [{ context: sentSpanContext }] })
-    .end();
+  const sentSpanContext = spaninate("send spans", () => sendSpans(config.transmit, rootContext, spanSpecs));
+  tracer.startSpan("link to trace", { links: [{ context: sentSpanContext }] }).end();
 
-  const url = await spaninateAsync("find link to dataset", () =>
-    findLinkToDataset(authData, sentSpanContext.traceId)
-  );
+  const url = spaninate("find link to dataset", () => findLinkToDataset(authData, sentSpanContext.traceId));
   console.log("  Oh look, I drew a picture: " + url + "\n");
 }
 
-type SpanSpec = HeatmapSpanSpec &
-  TraceSpanSpec &
-  Record<string, number | string | boolean>;
+type SpanSpec = HeatmapSpanSpec & TraceSpanSpec & Record<string, number | string | boolean>;
 
 function planSpans(config: InternalConfig): SpanSpec[] {
-  const heatmapSpanSpecs = spaninate("convert pixels to spans", () =>
-    convertPixelsToSpans(config.heatmap)
-  );
+  const heatmapSpanSpecs = spaninate("convert pixels to spans", () => convertPixelsToSpans(config.heatmap));
 
   const graphSpanSpecs = spaninate("add stacked graph attributes", () => {
     return addStackedGraphAttributes(config.stackedGraph, heatmapSpanSpecs);
@@ -90,9 +78,7 @@ sdk
   .then(() => sdk.shutdown());
 
 function printTraceLink(s: Span) {
-  console.log(
-    `Trace in jaeger: http://localhost:16686/trace/${s.spanContext().traceId}`
-  );
+  console.log(`Trace in jaeger: http://localhost:16686/trace/${s.spanContext().traceId}`);
   console.log(
     `Trace in honeycomb: https://ui.honeycomb.io/modernity/environments/spotcon/datasets/happy-o11ydays/trace?trace_id=${
       s.spanContext().traceId

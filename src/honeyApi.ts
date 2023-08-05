@@ -58,10 +58,10 @@ export function fetchConfiguration() {
   };
 }
 
-export async function findLinkToDataset(
+export function findLinkToDataset(
   authData: AuthResponse,
   traceId: string
-): Promise<string | undefined> {
+): string | undefined {
   const { dataset, apiKey } = fetchConfiguration();
   if (!apiKey) {
     return undefined;
