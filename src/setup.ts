@@ -51,7 +51,9 @@ function bluenessToDensityFunction(histogramColors: string[]) {
   const result: Record<number, number> = {};
   // i don't remember how to do the clever reduce-to-object in js, whatevs
   histogramColors.forEach(
-    (hex, n) => (result[Color.fromHex(hex).blue] = n + 1)
+    // the blueness is inverted because that's happening in the heatmap.ts
+    // I don't like it but changing it is work, because i have to fix o11ydays if I do
+    (hex, n) => (result[255 - Color.fromHex(hex).blue] = n + 1)
   );
   return result;
 }

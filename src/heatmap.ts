@@ -61,6 +61,7 @@ export function convertPixelsToSpans({
         .map((_) => ({
           ...p.asFlatJson(), // add all the fields, for observability ;-)
           spans_at_once,
+          "app.pixelColor": p.color.toString(),
           "app.spans_at_once": spans_at_once,
           time_delta: p.location.x - pixels.width,
           height: heatmapHeight(p.location.y), // make it noninteger, so hny knows this is a float field
@@ -115,9 +116,9 @@ export function approximateColorByNumberOfSpans(
 }
 
 function incrementEventDensity(distinctBluenesses: number[]) {
-  otel.trace
-    .getActiveSpan()
-    ?.setAttribute("app.bluenessCalculationStrategy", "increment");
+  const s = otel.trace.getActiveSpan();
+  s?.setAttribute("app.distinctBluenesses", JSON.stringify(distinctBluenesses));
+  s?.setAttribute("app.bluenessCalculationStrategy", "increment");
   return Object.fromEntries(distinctBluenesses.map((b, i) => [b, i + 1]));
 }
 

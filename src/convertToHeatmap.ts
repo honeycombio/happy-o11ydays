@@ -17,8 +17,6 @@ type CountOfSpans = number; // 0 to maxSpansAtOnePoint
 
 // This bit is a utility to convert your PNG to what it will look like on a heatmap
 
-// this constant is copied from Poodle
-
 export type ConvertPixelsInput = {
   pixels: Pixels;
   histogramColors: string[]; // 11 hex colors, starting with white
