@@ -49,7 +49,7 @@ export function approximateColorByNumberOfSpans(
   allPixels: Pixel[]
 ): (d: Pixel) => CountOfSpans {
   return spaninate("decide how many pixels to send per color", (s) => {
-    const darknesses = allPixels.map((p) => 255 - p.color.darkness());
+    const darknesses = allPixels.map((p) => p.color.darkness());
     const distinctDarknesses = [...new Set(darknesses)].sort();
     s.setAttribute("app.darknesses", JSON.stringify(distinctDarknesses));
 
@@ -70,7 +70,7 @@ export function approximateColorByNumberOfSpans(
       JSON.stringify(derivedDarknessToEventDensity)
     );
 
-    return (p) => derivedDarknessToEventDensity[255 - p.color.darkness()];
+    return (p) => derivedDarknessToEventDensity[p.color.darkness()];
   });
 }
 
