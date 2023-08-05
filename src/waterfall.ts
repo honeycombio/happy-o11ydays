@@ -1,4 +1,5 @@
 import { Pixel, Pixels } from "./image";
+import { SeededRandom } from "./shuffle";
 import { SpanSong } from "./song";
 import { spaninate } from "./tracing";
 import otel from "@opentelemetry/api";
@@ -43,6 +44,7 @@ const nothingSpecialOnTheWaterfall = {
 export type WaterfallConfig = {
   waterfallImages: ImageSource[];
   song: SongConfig;
+  seededRandom: SeededRandom;
 };
 
 type ImageSource = {
@@ -66,11 +68,17 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
 ): Array<T & TraceSpanSpec> {
   const span = otel.trace.getActiveSpan();
   span?.setAttribute("app.waterfallConfig", JSON.stringify(config));
+  span?.setAttribute("app.seededRandom", config.seededRandom.toString());
 
   const result = reduceUntilStop(
     fetchImageSources(config.waterfallImages),
     (resultsSoFar, img, i) => {
-      const [newResult, err] = buildOnePicture(resultsSoFar.rest, img, i);
+      const [newResult, err] = buildOnePicture(
+        resultsSoFar.rest,
+        img,
+        i,
+        config.seededRandom
+      );
       if (err) {
         return "stop";
       }
@@ -85,7 +93,9 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
     }
   );
 
-  spaninate("shuffle roots", () => shuffleRoots(result.imageSpans)); // mutates
+  spaninate("shuffle roots", () =>
+    shuffleRoots(config.seededRandom, result.imageSpans)
+  ); // mutates
   incrementRoots(result.imageSpans); // mutates
   const imageSpans = assignNames(config.song, result.imageSpans);
   const leftoversAsSpanEvents = result.rest.map((s) => ({
@@ -120,24 +130,14 @@ function assignNames<T extends HasTimeDelta & TraceSpanSpec>(
   return flattened;
 }
 
-// https://dev.to/codebubb/how-to-shuffle-an-array-in-javascript-2ikj
-// mutating
-function shuffleArray<T>(array: T[]) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const temp = array[i];
-    array[i] = array[j];
-    array[j] = temp;
-  }
-}
-
 // mutating.
 // changes the starts of the roots around so the pictures aren't all in a row
 function shuffleRoots<T extends HasTimeDelta>(
+  seededRandom: SeededRandom,
   imagesInWaterfall: Array<Array<T>>
 ) {
   const roots = imagesInWaterfall.map((ii) => ii[0]);
-  shuffleArray(roots);
+  seededRandom.shuffleInPlace(roots);
   imagesInWaterfall.forEach((imageRows, i) => (imageRows[0] = roots[i]));
 }
 
@@ -186,7 +186,8 @@ type BuildOnePictureOutcome<T extends HasTimeDelta> = [
 function buildOnePicture<T extends HasTimeDelta>(
   spans: T[],
   waterfallImageDescription: WaterfallImageDescription,
-  pictureID: number
+  pictureID: number,
+  seededRandom: SeededRandom
 ): BuildOnePictureOutcome<T> {
   return spaninate("build one picture", (s) => {
     s.setAttribute(
@@ -200,7 +201,7 @@ function buildOnePicture<T extends HasTimeDelta>(
     );
     s.setAttribute("app.maxIncrement", maxIncrement);
     const possibleIncrements = range(0, maxIncrement + 1);
-    shuffleArray(possibleIncrements);
+    seededRandom.shuffleInPlace(possibleIncrements);
     const finalFitResult: "fail" | FoundASpot<T> = findResult(
       possibleIncrements,
       (incrementFromTheLeft) =>

@@ -8,9 +8,11 @@ import { spaninate } from "./tracing";
 import fs from "fs";
 import path from "path";
 import { fetchNow, SendConfig } from "./transmit";
+import { SeededRandom } from "./shuffle";
 
 export type ExternalConfig = {
   greeting: string;
+  randomSeed?: number;
   heatmap: {
     imageFile: string;
     blueChannelToDensity?: Record<string, number>;
@@ -75,6 +77,10 @@ export function readConfiguration(filename: string): InternalConfig {
     s.setAttribute("app.configuredNow", configContent.transmit?.now || "none");
     s.setAttribute("app.now", now);
 
+    const seededRandom = new SeededRandom(
+      configContent.randomSeed || Date.now()
+    );
+
     return {
       greeting: configContent.greeting || "o11y o11y artistry",
       heatmap: {
@@ -83,7 +89,7 @@ export function readConfiguration(filename: string): InternalConfig {
         pixels,
       },
       stackedGraph: { pixels: stackedGraphPixels },
-      waterfall: { waterfallImages, song: { songLyrics } },
+      waterfall: { waterfallImages, song: { songLyrics }, seededRandom },
       transmit: { now },
     };
   });

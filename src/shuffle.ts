@@ -1,12 +1,16 @@
-class SeededRandom {
+export class SeededRandom {
   private seed: number;
+  private callsSoFar = 0;
+  private readonly originalSeed: number;
 
   constructor(seed: number) {
     this.seed = seed;
+    this.originalSeed = seed;
   }
 
   // http://indiegamr.com/generate-repeatable-random-numbers-in-js/
   next(max?: number, min?: number): number {
+    this.callsSoFar++;
     max = max || 1;
     min = min || 0;
 
@@ -21,6 +25,16 @@ class SeededRandom {
       const j = Math.floor(this.next() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
+  }
+
+  toString(): string {
+    return (
+      "seeded with " +
+      this.originalSeed +
+      ", called " +
+      this.callsSoFar +
+      " times so far"
+    );
   }
 }
 
