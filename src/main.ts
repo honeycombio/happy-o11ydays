@@ -1,7 +1,7 @@
 import { sdk } from "./initialize-tracing";
 
 import otel, { Context, Span, SpanContext } from "@opentelemetry/api";
-import { checkAuthorization, findLinkToDataset } from "./honeyApi";
+import { checkAuthorization, findLinkToDataset, findLinkToHeatmap } from "./honeyApi";
 import { HeatmapSpanSpec, convertPixelsToSpans } from "./heatmap";
 import { addStackedGraphAttributes } from "./stackedGraph";
 import { initializeDataset } from "./dataset";
@@ -35,7 +35,10 @@ async function main(rootContext: Context, imageFile: string) {
   tracer.startSpan("link to trace", { links: [{ context: sentSpanContext }] }).end();
 
   const url = spaninate("find link to dataset", () => findLinkToDataset(authData, sentSpanContext.traceId));
-  console.log("  Oh look, I drew a picture: " + url + "\n");
+  console.log("  Oh look, I wrote a song: " + url + "\n");
+
+  const url2 = spaninate("find link to heatmap", () => findLinkToHeatmap(authData, sentSpanContext.traceId));
+  console.log("Oh, and I drew a picture: " + url2 + "\n");
 }
 
 type SpanSpec = HeatmapSpanSpec & TraceSpanSpec & Record<string, number | string | boolean>;

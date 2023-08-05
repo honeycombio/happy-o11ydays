@@ -20,9 +20,7 @@ export type AuthResponse = {
   };
 };
 
-export async function fetchAuthorization(
-  apiKey: string
-): Promise<AuthResponse | undefined> {
+export async function fetchAuthorization(apiKey: string): Promise<AuthResponse | undefined> {
   const resp = await axios
     .get<AuthResponse>("https://api.honeycomb.io/1/auth", {
       responseType: "json",
@@ -30,9 +28,7 @@ export async function fetchAuthorization(
     })
     .catch((e) => e.response);
   if (resp.status !== 200) {
-    console.log(
-      "WARNING: Could not retrieve team/env data from APIKEY. " + resp.status
-    );
+    console.log("WARNING: Could not retrieve team/env data from APIKEY. " + resp.status);
     return undefined;
   }
 
@@ -42,15 +38,11 @@ export async function fetchAuthorization(
 export function fetchConfiguration() {
   const apiKey = process.env["HONEYCOMB_API_KEY"];
   if (!apiKey) {
-    console.log(
-      "Warning: HONEYCOMB_API_KEY not defined, so I can't give you a link"
-    );
+    console.log("Warning: HONEYCOMB_API_KEY not defined, so I can't give you a link");
   }
   const dataset = process.env["OTEL_SERVICE_NAME"];
   if (!dataset) {
-    console.log(
-      "Warning: OTEL_SERVICE_NAME not defined, so I can't link you to your dataset"
-    );
+    console.log("Warning: OTEL_SERVICE_NAME not defined, so I can't link you to your dataset");
   }
   return {
     dataset,
@@ -58,10 +50,7 @@ export function fetchConfiguration() {
   };
 }
 
-export function findLinkToDataset(
-  authData: AuthResponse,
-  traceId: string
-): string | undefined {
+export function findLinkToDataset(authData: AuthResponse, traceId: string): string | undefined {
   const { dataset, apiKey } = fetchConfiguration();
   if (!apiKey) {
     return undefined;
@@ -73,12 +62,31 @@ export function findLinkToDataset(
   //return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}`;
 }
 
+export function findLinkToHeatmap(authData: AuthResponse, traceId: string): string | undefined {
+  const { dataset, apiKey } = fetchConfiguration();
+  if (!apiKey) {
+    return undefined;
+  }
+
+  const datasetPortion = dataset ? `/datasets/${dataset}` : "";
+
+  const querySpec = {
+    calculations: [{ op: "HEATMAP", column: "height" }],
+    granularity: 5,
+    time_range: 600,
+    filters: [{ column: "trace.trace_id", op: "=", value: traceId }],
+  };
+
+  const encodedQuerySpec = encodeURI(JSON.stringify(querySpec));
+
+  return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}?query=${encodedQuerySpec}`;
+  //return `https://ui.honeycomb.io/${authData.team.slug}/environments/${authData.environment.slug}${datasetPortion}`;
+}
+
 export async function checkAuthorization() {
   const { apiKey } = fetchConfiguration();
   if (apiKey === undefined) {
-    throw new Error(
-      "hmm, no HONEYCOMB_API_KEY. If you run this with './run' it'll set you up better"
-    );
+    throw new Error("hmm, no HONEYCOMB_API_KEY. If you run this with './run' it'll set you up better");
   }
   const authData = await fetchAuthorization(apiKey);
   if (!authData) {
