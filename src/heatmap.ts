@@ -63,9 +63,13 @@ export function convertPixelsToWhatItsGonnaLookLike({
     visiblePixels
   );
 
-  visiblePixels.map((p) =>
-    p.withColor(Color.fromHex(HISTOGRAM_COLOR_RANGE_OLD[spansForColor(p) - 1]))
-  );
+  visiblePixels
+    .map((p) =>
+      p.withColor(
+        Color.fromHex(HISTOGRAM_COLOR_RANGE_OLD[spansForColor(p) - 1])
+      )
+    )
+    .map((p) => pixels.overwrite(p));
   pixels.writeToFile("heatmap-version.png");
 }
 
