@@ -55,30 +55,20 @@ type ImageSource = {
 function fetchImageSources(config: ImageSource[]): WaterfallImageDescription[] {
   return config
     .map(({ pixels, maxCount, waterfallImageName }) =>
-      Array(maxCount).fill(
-        readWaterfallImageDescription(pixels, waterfallImageName)
-      )
+      Array(maxCount).fill(readWaterfallImageDescription(pixels, waterfallImageName))
     )
     .flat();
 }
 
-export function buildPicturesInWaterfall<T extends HasTimeDelta>(
-  config: WaterfallConfig,
-  spans: T[]
-): Array<T & TraceSpanSpec> {
-  const span = otel.trace.getActiveSpan();
-  span?.setAttribute("app.waterfallConfig", JSON.stringify(config));
-  span?.setAttribute("app.seededRandom", config.seededRandom.toString());
-
-  const result = reduceUntilStop(
-    fetchImageSources(config.waterfallImages),
+function drawImagesInSpans<T extends HasTimeDelta>(
+  imageSources: WaterfallImageDescription[],
+  spans: T[],
+  seededRandom: SeededRandom
+): { imageSpans: Array<Array<T & TraceSpanSpec>>; rest: T[] } {
+  return reduceUntilStop(
+    imageSources,
     (resultsSoFar, img, i) => {
-      const [newResult, err] = buildOnePicture(
-        resultsSoFar.rest,
-        img,
-        i,
-        config.seededRandom
-      );
+      const [newResult, err] = buildOnePicture(resultsSoFar.rest, img, i, seededRandom);
       if (err) {
         return "stop";
       }
@@ -92,10 +82,19 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
       rest: spans,
     }
   );
+}
 
-  spaninate("shuffle roots", () =>
-    shuffleRoots(config.seededRandom, result.imageSpans)
-  ); // mutates
+export function buildPicturesInWaterfall<T extends HasTimeDelta>(
+  config: WaterfallConfig,
+  spans: T[]
+): Array<T & TraceSpanSpec> {
+  const span = otel.trace.getActiveSpan();
+  span?.setAttribute("app.waterfallConfig", JSON.stringify(config));
+  span?.setAttribute("app.seededRandom", config.seededRandom.toString());
+
+  const result = drawImagesInSpans(fetchImageSources(config.waterfallImages), spans, config.seededRandom);
+
+  spaninate("shuffle roots", () => shuffleRoots(config.seededRandom, result.imageSpans)); // mutates
   incrementRoots(result.imageSpans); // mutates
   const imageSpans = assignNames(config.song, result.imageSpans);
   const leftoversAsSpanEvents = result.rest.map((s) => ({
@@ -107,10 +106,7 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
 }
 
 type SongConfig = { songLyrics: string };
-function assignNames<T extends HasTimeDelta & TraceSpanSpec>(
-  config: SongConfig,
-  images: T[][]
-): T[] {
+function assignNames<T extends HasTimeDelta & TraceSpanSpec>(config: SongConfig, images: T[][]): T[] {
   function byRootStartTime(a: T[], b: T[]) {
     return a[0].time_delta - b[0].time_delta;
   }
@@ -132,25 +128,17 @@ function assignNames<T extends HasTimeDelta & TraceSpanSpec>(
 
 // mutating.
 // changes the starts of the roots around so the pictures aren't all in a row
-function shuffleRoots<T extends HasTimeDelta>(
-  seededRandom: SeededRandom,
-  imagesInWaterfall: Array<Array<T>>
-) {
+function shuffleRoots<T extends HasTimeDelta>(seededRandom: SeededRandom, imagesInWaterfall: Array<Array<T>>) {
   const roots = imagesInWaterfall.map((ii) => ii[0]);
   seededRandom.shuffleInPlace(roots);
   imagesInWaterfall.forEach((imageRows, i) => (imageRows[0] = roots[i]));
 }
 
-function incrementRoots<T extends HasTimeDelta & TraceSpanSpec>(
-  imagesInWaterfall: Array<Array<T>>
-) {
+function incrementRoots<T extends HasTimeDelta & TraceSpanSpec>(imagesInWaterfall: Array<Array<T>>) {
   spaninate("increment roots", (s) => {
     const roots = imagesInWaterfall.map((ii) => ii[0]);
     roots.sort((r1, r2) => r2.time_delta - r1.time_delta);
-    s.setAttribute(
-      "app.rootTimeDeltas",
-      roots.map((r) => r.time_delta).join(",")
-    );
+    s.setAttribute("app.rootTimeDeltas", roots.map((r) => r.time_delta).join(","));
     for (var i = 1; i < roots.length; i++) {
       const prevRoot = roots[i - 1];
       const root = roots[i];
@@ -165,10 +153,7 @@ type WaterfallImageDescription = {
   rows: WaterfallImageRow[];
   waterfallImageName: string;
 };
-function readWaterfallImageDescription(
-  pixels: Pixels,
-  waterfallImageName: string
-): WaterfallImageDescription {
+function readWaterfallImageDescription(pixels: Pixels, waterfallImageName: string): WaterfallImageDescription {
   return {
     rows: [
       { start: 0, width: 0, waterfallColor: "none" }, // invent an early root span because I want this at the top of the trace
@@ -190,44 +175,30 @@ function buildOnePicture<T extends HasTimeDelta>(
   seededRandom: SeededRandom
 ): BuildOnePictureOutcome<T> {
   return spaninate("build one picture", (s) => {
-    s.setAttribute(
-      "app.waterfallImageDescription",
-      JSON.stringify(waterfallImageDescription)
-    );
+    s.setAttribute("app.waterfallImageDescription", JSON.stringify(waterfallImageDescription));
     s.setAttribute("app.pictureID", pictureID);
-    const maxIncrement = maxIncrementThatMightStillFit(
-      spans,
-      waterfallImageDescription.rows
-    );
+    const maxIncrement = maxIncrementThatMightStillFit(spans, waterfallImageDescription.rows);
     s.setAttribute("app.maxIncrement", maxIncrement);
     const possibleIncrements = range(0, maxIncrement + 1);
     seededRandom.shuffleInPlace(possibleIncrements);
-    const finalFitResult: "fail" | FoundASpot<T> = findResult(
-      possibleIncrements,
-      (incrementFromTheLeft) =>
-        findASpot(spans, waterfallImageDescription.rows, incrementFromTheLeft++)
+    const finalFitResult: "fail" | FoundASpot<T> = findResult(possibleIncrements, (incrementFromTheLeft) =>
+      findASpot(spans, waterfallImageDescription.rows, incrementFromTheLeft++)
     );
 
     if (finalFitResult === "fail") {
       s.setAttribute("app.fitResult", "fail");
       // we are done putting images in there
-      return [
-        { imageSpans: [], rest: spans },
-        "Give up, there's no way this is gonna fit",
-      ];
+      return [{ imageSpans: [], rest: spans }, "Give up, there's no way this is gonna fit"];
     }
 
     const { waterfallImageSpans, availableSpans } = finalFitResult;
     s.setAttribute("app.waterfallImageSpanCount", waterfallImageSpans.length);
     // ok. now we have an allocated span for each of the picture rows. The rest of the spans are in availableSpans
 
-    const waterfallImageSpecs3 = determineTreeStructure(
-      waterfallImageSpans
-    ) as Array<T & TraceSpanSpec>; // dammit typescript, i have spent too much time fighting you
+    const waterfallImageSpecs3 = determineTreeStructure(waterfallImageSpans) as Array<T & TraceSpanSpec>; // dammit typescript, i have spent too much time fighting you
 
     waterfallImageSpecs3.forEach((ss, i) => {
-      (ss as any)["waterfallImageName"] = // add these fields for tracing
-        waterfallImageDescription.waterfallImageName;
+      (ss as any)["waterfallImageName"] = waterfallImageDescription.waterfallImageName; // add these fields for tracing
       (ss as any)["waterfallPictureID"] = pictureID;
       (ss as any)["waterfallPosition"] = `Line ${i} in Picture ${pictureID}`;
     });
@@ -241,15 +212,10 @@ function buildOnePicture<T extends HasTimeDelta>(
   });
 }
 
-function maxIncrementThatMightStillFit(
-  spans: HasTimeDelta[],
-  waterfallImageDescription: WaterfallImageRow[]
-) {
+function maxIncrementThatMightStillFit(spans: HasTimeDelta[], waterfallImageDescription: WaterfallImageRow[]) {
   const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
   const maxTimeDelta = Math.max(...spans.map((s) => s.time_delta)); // should be 0
-  const waterfallImageWidth = Math.max(
-    ...waterfallImageDescription.map((w) => w.start + w.width)
-  );
+  const waterfallImageWidth = Math.max(...waterfallImageDescription.map((w) => w.start + w.width));
   const biggestTimeDeltaThatMightFit = maxTimeDelta - waterfallImageWidth;
   const maxIncrementFromLeft = biggestTimeDeltaThatMightFit - minTimeDelta;
 
@@ -267,23 +233,14 @@ function proportion<T extends HasTimeDelta>(
   const minTimeDelta = Math.min(...spans.map((s) => s.time_delta));
   const maxTimeDelta = Math.max(...spans.map((s) => s.time_delta)); // should be 0
   if (minTimeDelta + increment > maxTimeDelta) {
-    throw new Error(
-      `Invalid increment: ${increment}. Waterfall is only ${
-        maxTimeDelta - minTimeDelta
-      } wide`
-    );
+    throw new Error(`Invalid increment: ${increment}. Waterfall is only ${maxTimeDelta - minTimeDelta} wide`);
   }
   const totalWaterfallWidth = maxTimeDelta - minTimeDelta;
-  const waterfallImageWidth = Math.max(
-    ...waterfallImageDescription.map((w) => w.start + w.width)
-  );
-  const waterfallImagePixelWidth = Math.floor(
-    (totalWaterfallWidth / waterfallImageWidth) * 0.6
-  );
+  const waterfallImageWidth = Math.max(...waterfallImageDescription.map((w) => w.start + w.width));
+  const waterfallImagePixelWidth = Math.floor((totalWaterfallWidth / waterfallImageWidth) * 0.6);
 
   return {
-    calculateTimeDelta: (start: number) =>
-      start * waterfallImagePixelWidth + minTimeDelta + increment,
+    calculateTimeDelta: (start: number) => start * waterfallImagePixelWidth + minTimeDelta + increment,
     calculateWidth: (width: number) => width * waterfallImagePixelWidth,
   };
 }
@@ -295,15 +252,11 @@ function readImageData(pixels: Pixels): WaterfallImageRow[] {
   }
 
   const rows = range(0, pixels.height).map((y) => {
-    const start = range(0, pixels.width).find((x) =>
-      hasSomeBlue(pixels.at(x, y))
-    );
+    const start = range(0, pixels.width).find((x) => hasSomeBlue(pixels.at(x, y)));
     if (start === undefined) {
       return undefined; // filter these out later
     }
-    const possibleWidth = range(start, pixels.width).findIndex(
-      (x) => !hasSomeBlue(pixels.at(x, y))
-    );
+    const possibleWidth = range(start, pixels.width).findIndex((x) => !hasSomeBlue(pixels.at(x, y)));
     const width = possibleWidth === -1 ? pixels.width - start : possibleWidth;
     const representativePixel = pixels.at(start, y); // not good if there's a sparkle there
     return [
@@ -336,9 +289,7 @@ function range(startInclusive: number, endExclusive: number) {
   return [...Array(endExclusive).keys()].map((x) => x + startInclusive);
 }
 
-function groupByTimeDelta<T extends HasTimeDelta>(
-  ss: T[]
-): Record<number, T[]> {
+function groupByTimeDelta<T extends HasTimeDelta>(ss: T[]): Record<number, T[]> {
   return ss.reduce((p, c) => {
     const k = c.time_delta;
     if (!p.hasOwnProperty(k)) {
@@ -349,9 +300,7 @@ function groupByTimeDelta<T extends HasTimeDelta>(
   }, {} as Record<number, T[]>);
 }
 
-function determineTreeStructure<T extends HasTimeDelta & MightBeASpanEvent>(
-  specsSoFar: T[]
-) {
+function determineTreeStructure<T extends HasTimeDelta & MightBeASpanEvent>(specsSoFar: T[]) {
   var parentTimeDeltas: Array<{
     time_delta: DistanceFromRight;
     increment: number;
@@ -391,8 +340,7 @@ function determineTreeStructure<T extends HasTimeDelta & MightBeASpanEvent>(
     };
   });
   // any remaining parents, we need to pop them after for cleanup.
-  waterfallImageSpecs3[waterfallImageSpecs3.length - 1].popAfter =
-    parentTimeDeltas.length;
+  waterfallImageSpecs3[waterfallImageSpecs3.length - 1].popAfter = parentTimeDeltas.length;
 
   return waterfallImageSpecs3;
 }
@@ -401,20 +349,14 @@ type FoundASpot<T extends HasTimeDelta> = {
   waterfallImageSpans: Array<T & MightBeASpanEvent>;
   availableSpans: T[];
 };
-type PossibleFits<T extends HasTimeDelta> =
-  | [FoundASpot<T>, null]
-  | [null, "Not enough room"];
+type PossibleFits<T extends HasTimeDelta> = [FoundASpot<T>, null] | [null, "Not enough room"];
 // typescript makes this hard... use go-style return
 function findASpot<T extends HasTimeDelta>(
   spans: T[],
   waterfallImageDescription: WaterfallImageRow[],
   incrementFromTheLeft: number
 ): PossibleFits<T> {
-  const fitWithinImage = proportion(
-    spans,
-    waterfallImageDescription,
-    incrementFromTheLeft
-  );
+  const fitWithinImage = proportion(spans, waterfallImageDescription, incrementFromTheLeft);
   const { calculateWidth, calculateTimeDelta } = fitWithinImage;
   const waterfallImageSpecs1 = waterfallImageDescription.map((w, i) => ({
     time_delta: calculateTimeDelta(w.start),
@@ -450,11 +392,7 @@ function findASpot<T extends HasTimeDelta>(
 }
 
 // what I really want is an iteratee, so I'll just make one
-function reduceUntilStop<T, R>(
-  arr: T[],
-  fn: (prev: R, e: T, i: number) => R | "stop",
-  init: R
-): R {
+function reduceUntilStop<T, R>(arr: T[], fn: (prev: R, e: T, i: number) => R | "stop", init: R): R {
   var output = init;
   for (var i = 0; i < arr.length; i++) {
     const result = fn(output, arr[i], i);
@@ -467,10 +405,7 @@ function reduceUntilStop<T, R>(
   return output;
 }
 
-function mapUntilFail<T, R>(
-  arr: T[],
-  fn: (e: T, i: number) => R | "fail"
-): R[] | "fail" {
+function mapUntilFail<T, R>(arr: T[], fn: (e: T, i: number) => R | "fail"): R[] | "fail" {
   var output: R[] = [];
   for (var i = 0; i < arr.length; i++) {
     const result = fn(arr[i], i);
@@ -483,10 +418,7 @@ function mapUntilFail<T, R>(
   return output;
 }
 
-function findResult<T, R>(
-  arr: T[],
-  fn: (e: T, i: number) => [R, null] | [null, "Not enough room"]
-): R | "fail" {
+function findResult<T, R>(arr: T[], fn: (e: T, i: number) => [R, null] | [null, "Not enough room"]): R | "fail" {
   for (var i = 0; i < arr.length; i++) {
     const [result, err] = fn(arr[i], i);
     if (err !== "Not enough room") {
