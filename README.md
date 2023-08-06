@@ -202,7 +202,21 @@ To do this, be a team owner (or pair with one). Be in the development environmen
 Choose "Datasets" on the left nav. Then click the name of the dataset, like "viz-art" or whatever yours is called.
 This opens dataset settings. From here, one of the tabs at the top says "Delete." This tab has the button you want.
 
-## Use this program to draw other pictures
+## Observe this program
+
+Each run emits two traces: the entertaining one, which builds the heatmap and a picture in the trace.
+The `./run` script sends them directly to Honeycomb.
+
+You can send them to a local collector, which will send them to both Honeycomb and a local Jaeger instance.
+To run a local collector and Jaeger:
+
+`docker compose up`
+
+and then use this script:
+
+`./run-local`
+
+# Use this program to draw other pictures
 
 This code generates the heatmap image from a .png.
 
@@ -227,17 +241,3 @@ Run this program again.
 Now go do the HEATMAP(height) and see what it looks like. Tweet a screenshot at @honeycombio please!
 
 [Blackbird poem](https://www.poetryfoundation.org/poems/45236/thirteen-ways-of-looking-at-a-blackbird)
-
-## Observe this program
-
-Each run emits two traces: the entertaining one, which builds the heatmap and a picture in the trace.
-The `./run` script sends them directly to Honeycomb.
-
-You can send them to a local collector, which will send them to both Honeycomb and a local Jaeger instance.
-To run a local collector and Jaeger:
-
-`docker compose up`
-
-and then use this script:
-
-`./run-local`
