@@ -97,7 +97,7 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   );
 
   // commented out to eliminate the complication.
-  //spaninate("shuffle roots", () => shuffleRoots(config.seededRandom, result.imageSpans)); // mutates
+  spaninate("shuffle roots", () => shuffleRoots(config.seededRandom, result.imageSpans)); // mutates
 
   incrementRoots(result.imageSpans); // mutates
   const imageSpans = assignNames(config.song, result.imageSpans);
