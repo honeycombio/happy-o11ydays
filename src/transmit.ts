@@ -1,29 +1,20 @@
 import otel, { Context, HrTime, Span, SpanContext } from "@opentelemetry/api";
-import {
-  HeatmapSpanSpec,
-  placeHorizontallyInBucket,
-  planEndTime,
-} from "./heatmap";
+import { HeatmapSpanSpec, placeHorizontallyInBucket, planEndTime } from "./heatmap";
 import { TraceSpanSpec } from "./waterfall";
 import { spaninate } from "./tracing";
 
 export type SendConfig = { now: SecondsSinceEpoch };
 
-type SpanSpec = TraceSpanSpec &
-  HeatmapSpanSpec &
-  Record<string, string | number | boolean>;
+type SpanSpec = TraceSpanSpec & HeatmapSpanSpec & Record<string, string | number | boolean>;
 export type SecondsSinceEpoch = number;
 
-export function sendSpans(
-  config: SendConfig,
-  rootContext: Context,
-  spanSpecs: SpanSpec[]
-): SpanContext {
+export function sendSpans(config: SendConfig, rootContext: Context, spanSpecs: SpanSpec[]): SpanContext {
   const executionSpan = otel.trace.getActiveSpan()!;
   executionSpan.setAttribute("app.spanCount", spanSpecs.length);
   const tracer = otel.trace.getTracer("o11y o11y artistry");
   const begin: SecondsSinceEpoch = config.now;
   const earliestTimeDelta = Math.min(...spanSpecs.map((s) => s.time_delta));
+  spanSpecs.forEach((ss, i) => (ss["app.order"] = i));
   // the root span has no height, so it doesn't appear in the heatmap
   return tracer.startActiveSpan(
     "🎼",
@@ -44,11 +35,7 @@ export function sendSpans(
       var openSpanEndTime: HrTime | undefined = undefined; // so that I can end that openSpan correctly
       spanSpecs.forEach((ss, _spanNumber) => {
         ss["begin"] = begin; // this is handy for sorting the traces by how recently they were created.
-        const startTime = placeHorizontallyInBucket(
-          begin,
-          ss.time_delta,
-          ss.increment
-        );
+        const startTime = placeHorizontallyInBucket(begin, ss.time_delta, ss.increment);
         if (ss.spanEvent) {
           // something completely different
           openSpan.addEvent("sparkle", ss, startTime);
@@ -90,11 +77,7 @@ export function fetchNow() {
   });
 }
 
-function closePreviousSpan(
-  rootSpan: Span,
-  openSpan: Span,
-  openSpanEndTime: HrTime | undefined
-) {
+function closePreviousSpan(rootSpan: Span, openSpan: Span, openSpanEndTime: HrTime | undefined) {
   if (openSpan !== rootSpan) {
     // now that we've added all the spanEvents, close the previous span
     openSpan.end(openSpanEndTime);

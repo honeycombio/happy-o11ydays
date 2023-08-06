@@ -92,9 +92,13 @@ export function buildPicturesInWaterfall<T extends HasTimeDelta>(
   span?.setAttribute("app.waterfallConfig", JSON.stringify(config));
   span?.setAttribute("app.seededRandom", config.seededRandom.toString());
 
-  const result = drawImagesInSpans(fetchImageSources(config.waterfallImages), spans, config.seededRandom);
+  const result = spaninate("draw images", () =>
+    drawImagesInSpans(fetchImageSources(config.waterfallImages), spans, config.seededRandom)
+  );
 
-  spaninate("shuffle roots", () => shuffleRoots(config.seededRandom, result.imageSpans)); // mutates
+  // commented out to eliminate the complication.
+  //spaninate("shuffle roots", () => shuffleRoots(config.seededRandom, result.imageSpans)); // mutates
+
   incrementRoots(result.imageSpans); // mutates
   const imageSpans = assignNames(config.song, result.imageSpans);
   const leftoversAsSpanEvents = result.rest.map((s) => ({
@@ -340,9 +344,29 @@ function determineTreeStructure<T extends HasTimeDelta & MightBeASpanEvent>(spec
     };
   });
   // any remaining parents, we need to pop them after for cleanup.
-  waterfallImageSpecs3[waterfallImageSpecs3.length - 1].popAfter = parentTimeDeltas.length;
+  const lastRow = waterfallImageSpecs3[findLastIndex(waterfallImageSpecs3, (s) => !s.spanEvent)];
+  (lastRow as any)["app.lastRow.popAfter"] = lastRow.popAfter;
+  (lastRow as any)["app.lastRow.parentTimeDeltasLength"] = parentTimeDeltas.length;
+  lastRow.popAfter = parentTimeDeltas.length;
 
   return waterfallImageSpecs3;
+}
+
+/**
+ * https://stackoverflow.com/questions/40929260/find-last-index-of-element-inside-array-by-certain-condition
+ * Returns the index of the last element in the array where predicate is true, and -1
+ * otherwise.
+ * @param array The source array to search in
+ * @param predicate find calls predicate once for each element of the array, in descending
+ * order, until it finds one where predicate returns true. If such an element is found,
+ * findLastIndex immediately returns that element index. Otherwise, findLastIndex returns -1.
+ */
+export function findLastIndex<T>(array: Array<T>, predicate: (value: T, index: number, obj: T[]) => boolean): number {
+  let l = array.length;
+  while (l--) {
+    if (predicate(array[l], l, array)) return l;
+  }
+  return -1;
 }
 
 type FoundASpot<T extends HasTimeDelta> = {
