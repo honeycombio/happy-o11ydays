@@ -1,6 +1,6 @@
 import { readImage } from "./image";
 
-import { default as rednessJson } from "../input/redkey.json";
+import { default as rednessJson } from "../input/christmas/redkey.json"; //TODO: configurate
 import { HeatmapConfig, SecondsSinceEpoch } from "./heatmap";
 import { StackedGraphConfig } from "./stackedGraph";
 import { WaterfallConfig } from "./waterfall";

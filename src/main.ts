@@ -58,7 +58,7 @@ function planSpans(config: InternalConfig): SpanSpec[] {
 
 const tracer = otel.trace.getTracer("main.ts");
 
-const imageFile = process.argv[2] || "input/happyO11ydays.json";
+const imageFile = process.argv[2] || "input/christmas/config.json"; // backwards compatibility
 const rootContext = otel.context.active();
 sdk
   .start()

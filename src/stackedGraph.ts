@@ -1,5 +1,5 @@
 import { Pixel, Pixels, readImage } from "./image";
-import { default as stackKey } from "../input/stackKey.json";
+import { default as stackKey } from "../input/christmas/stackKey.json"; //TODO: configure
 import otel from "@opentelemetry/api";
 
 function onlyUnique<T>(value: T, index: number, self: T[]): boolean {
