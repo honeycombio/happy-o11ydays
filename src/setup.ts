@@ -1,20 +1,9 @@
 import { sdk } from "./initialize-tracing";
 
-import otel, { Context, Span } from "@opentelemetry/api";
+import otel, { Context } from "@opentelemetry/api";
 import { convertPixelsToWhatItsGonnaLookLike } from "./convertToHeatmap";
 import { spaninate } from "./tracing";
-import { InternalConfig, readConfiguration } from "./config";
-import { Color } from "./image";
-
-const greeting = (text: string) => ` _________________ 
-< ${text}! >
- ----------------- 
-        \\   ^__^
-         \\  (oo)\\_______
-            (__)\\       )\\/\\
-                ||----w |
-                ||     ||
-`;
+import { Color, Pixels, readImage } from "./image";
 
 export const HISTOGRAM_COLOR_RANGE_OLD = [
   "#ffffff", // 0 spans means white
@@ -30,21 +19,24 @@ export const HISTOGRAM_COLOR_RANGE_OLD = [
   "#320656",
 ];
 
+const OUTPUT_FILENAME = "heatmap-output.png";
+
 async function main(rootContext: Context, imageFile: string) {
-  const config = readConfiguration(imageFile);
+  const pixels = spaninate("read image", () => readImage(imageFile));
 
-  spaninate("greet", () => console.log(greeting(config.greeting)));
-
-  spaninate("convert image", () => convertImage(config));
-
-  console.log(
-    '"blueChannelToDensity": ' +
-      JSON.stringify(
-        bluenessToDensityFunction(HISTOGRAM_COLOR_RANGE_OLD.slice(1))
-      )
+  const outputPixels: Pixels = spaninate("convert image", () =>
+    convertPixelsToWhatItsGonnaLookLike({
+      pixels,
+      histogramColors: HISTOGRAM_COLOR_RANGE_OLD,
+    })
   );
 
-  // output the map that I need
+  spaninate("write image", () => outputPixels.writeToFile(OUTPUT_FILENAME));
+
+  // needed this once. Now the output is in defaultConfig.json
+  // console.log(
+  //   '"blueChannelToDensity": ' + JSON.stringify(bluenessToDensityFunction(HISTOGRAM_COLOR_RANGE_OLD.slice(1)))
+  // );
 }
 
 function bluenessToDensityFunction(histogramColors: string[]) {
@@ -58,23 +50,14 @@ function bluenessToDensityFunction(histogramColors: string[]) {
   return result;
 }
 
-function convertImage(config: InternalConfig) {
-  spaninate("convert pixels to spans", () =>
-    convertPixelsToWhatItsGonnaLookLike({
-      pixels: config.heatmap.pixels,
-      histogramColors: HISTOGRAM_COLOR_RANGE_OLD,
-    })
-  );
-}
+const tracer = otel.trace.getTracer("setup.ts");
 
-const tracer = otel.trace.getTracer("main.ts");
-
-const imageFile = process.argv[2] || "input/happyO11ydays.json";
+const imageFile = process.argv[2];
 const rootContext = otel.context.active();
 sdk
   .start()
   .then(() =>
-    tracer.startActiveSpan("main", (s) =>
+    tracer.startActiveSpan("setup main", (s) =>
       main(rootContext, imageFile).then(
         () => {
           s.end();

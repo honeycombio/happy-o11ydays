@@ -1,0 +1,37 @@
+#!/bin/bash
+
+if [[ ! -d node_modules ]]; then
+  npm install
+fi
+
+if [[ -e .env ]]; then
+  source .env
+fi
+
+if [[ -z "$HONEYCOMB_API_KEY" ]]; then
+   echo "Didn't see HONEYCOMB_API_KEY, not setting up tracing. That's OK for this part"
+else
+  export OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-https://api.honeycomb.io/}
+  export OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-happy-o11ydays}
+  export OTEL_EXPORTER_OTLP_HEADERS="x-honeycomb-team=$HONEYCOMB_API_KEY"
+fi
+
+if [[ -z $1 ]]; then
+  echo "USAGE: setup <path/to/png>"
+  exit 1
+fi
+
+input_name="custom" # todo: base this off the png or something
+directory="./input/$input_name"
+mkdir -p $directory
+
+configfile="$directory/config.json"
+if [[ ! -e $configfile ]]; then
+  cp ./input/defaultConfig.json $configfile
+  cp ./input/house.png $directory
+  cp ./input/circle.png $directory
+  cp ./input/song.txt $directory
+fi
+
+npm run setup -- $*
+mv heatmap-output.png $directory/heatmap.png # filename is hardcoded, bummer
