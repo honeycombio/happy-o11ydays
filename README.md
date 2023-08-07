@@ -218,26 +218,67 @@ and then use this script:
 
 # Use this program to draw other pictures
 
-This code generates the heatmap image from a .png.
+This code generates the heatmap image from a PNG image. You can translate a PNG of your choice into a heatmap!
+
+## Shrink your PNG to the right size
 
 Create an image that is:
 
 - .png, in RGBA color format (this is pretty normal)
 - 26-50 pixels tall
-- up to 100 pixels wide (wider is OK, but 100 is nice for a ten-minute time range)
+- about 100 pixels wide (wider is OK, but 100 is nice for a ten-minute time range)
 - with a white and/or transparent background
-- containing a picture in shades of blue (red and green components are ignored)
-- ideally no more than 10 shades of blue
 
-Put that image in the 'input' directory. Then change `input/happyO11ydays.json`, and put your
-filename in the `heatmap.imageFile` attribute.
+## Get a heatmap-friendly version of your PNG
 
-There's other configuration in there; you're free to change the images that it tries to draw
-in the stacked graph and in the trace. You can also provide text to put in the span names of the trace.
-These have very persnickety limitations that are not yet documented.
+Now, run a script to setup the input files:
 
-Run this program again.
+`./setup path/to/your/png`
 
-Now go do the HEATMAP(height) and see what it looks like. Tweet a screenshot at @honeycombio please!
+If you get errors about not connecting to Honeycomb, that's OK, it means it failed to send a trace, and it doesn't matter for this script.
+
+The setup script will
+
+- create a directory called input/custom
+- put a config.json in it
+- copy in some default files for the trace view and stacked graph
+- turn your PNG into what it'll look like as a heatmap.
+
+## Tweak your PNG
+
+Open the file `input/custom/heatmap.png`.
+
+This should look like your input PNG, but heatmappier. Now, tweak this in a pixel editor. Change which pixels are which colors.
+It'll work best if you stick with the colors in it. (There are ten possible colors plus white. Maybe they aren't all in there.
+Check the code in setup.ts if you want the full list.)
+
+Save the file.
+
+## Run the program with your custom input
+
+`./run input/custom/config.json`
+
+This should make a heatmap of your image!
+
+## Further customizations
+
+You can change other items. This isn't fully documented but here are some hints:
+
+`song.txt` contains lines (newline delimited) and verses delimited by 🎼 (sorry).
+
+`house.png` contains a tree (oops) that'll show up in a stacked graph. The way this works is pretty weird.
+
+`circle.png` contains an attempt at a circle to draw in the trace. You can make more 10-pixels-wide (ish) images, and add
+them to the list of waterfall images in `config.json`. The way it works is a little weird; the first (leftmost) bar of solid color
+on each row will be represented by the span, and the rest will be span events, I think.
+
+The Christmas input is customized for attributes on the events that show in the heatmap, but how that works is _very_ weird,
+so I'll change it before I try to explain it.
+
+## Share your results
+
+If you come up with some fun input, make a PR to this repository!
+
+And tweet a screenshot at @honeycombio please!
 
 [Blackbird poem](https://www.poetryfoundation.org/poems/45236/thirteen-ways-of-looking-at-a-blackbird)
