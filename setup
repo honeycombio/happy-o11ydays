@@ -28,9 +28,9 @@ mkdir -p $directory
 configfile="$directory/config.json"
 if [[ ! -e $configfile ]]; then
   cp ./input/defaultConfig.json $configfile
-  cp ./input/house.png $directory
-  cp ./input/circle.png $directory
-  cp ./input/song.txt $directory
+  cp ./input/christmas/house.png $directory
+  cp ./input/christmas/circle.png $directory
+  cp ./input/christmas/song.txt $directory
 fi
 
 npm run setup -- $*
