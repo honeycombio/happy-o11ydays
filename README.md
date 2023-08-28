@@ -218,6 +218,8 @@ and then use this script:
 
 # Use this program to draw other pictures
 
+After you've run this program and seen our picture, you can make your own.
+
 This code generates the heatmap image from a PNG image. You can translate a PNG of your choice into a heatmap!
 
 ## Shrink your PNG to the right size
